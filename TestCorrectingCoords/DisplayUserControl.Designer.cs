@@ -36,7 +36,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Name = "DisplayUserControl";
             this.Size = new System.Drawing.Size(587, 359);
-            this.MouseClick += new System.Windows.Forms.MouseEventHandler(this.DisplayUserControl_MouseClick);
+            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.DisplayUserControl_MouseMove);
             this.ResumeLayout(false);
 
         }

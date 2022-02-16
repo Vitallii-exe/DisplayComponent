@@ -6,5 +6,10 @@ namespace TestCorrectingCoords
         {
             InitializeComponent();
         }
+
+        private void displayUserControl_MouseMove(object sender, MouseEventArgs e)
+        {
+
+        }
     }
 }

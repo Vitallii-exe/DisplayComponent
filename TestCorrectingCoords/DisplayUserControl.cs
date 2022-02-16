@@ -5,7 +5,7 @@
         float currentScale = 1F;
         Image origin;
         Point shift = new Point(0, 0);
-        (float Width, float Height) oldSize;
+        (float X, float Y) Scroll;
         bool myRedraw = true;
 
         public DisplayUserControl()
@@ -16,7 +16,9 @@
 
         private void ScaleChangedByWheel(bool isScaleUp)
         {
-            float scaleBeforeChanging = currentScale;
+            Point controlCursor = PointToClient(Cursor.Position);
+            (float X, float Y) imageCursor = GetImageCursor(controlCursor, Scroll, currentScale);
+
             if (isScaleUp)
             {
                 currentScale += 0.1F;
@@ -25,14 +27,10 @@
             {
                 currentScale -= 0.1F;
             }
-            oldSize = (Size.Width, Size.Height);
-            Point relativeCursorPos = PointToClient(Cursor.Position);
-            relativeCursorPos = GetRelativeCoord(relativeCursorPos, scaleBeforeChanging);
-
-            shift = GetCoordToScaleWithCursorBinding(relativeCursorPos);
+            Scroll = GetScroll(controlCursor, imageCursor, currentScale);
             myRedraw = true;
             Invalidate();
-            System.Diagnostics.Debug.WriteLine("Now scale is: " + currentScale);
+
             return;
         }
 
@@ -44,65 +42,39 @@
                 Rectangle destRect = new Rectangle(0, 0, Size.Width, Size.Height);
                 GraphicsUnit units = GraphicsUnit.Pixel;
 
-                e.Graphics.DrawImage(origin, destRect, shift.X, shift.Y, Size.Width / currentScale, Size.Height / currentScale, units);
+                e.Graphics.DrawImage(origin, destRect, Scroll.X, Scroll.Y, Size.Width / currentScale, Size.Height / currentScale, units);
                 myRedraw = false;
             }
             //oldSize = (Size.Width, Size.Height);
             return;
         }
 
-        private Point GetCoordToScaleWithCursorBinding(Point elementCursor)
+        private (float, float) GetImageCursor(Point controlCursor, (float X, float Y) scroll, float scale)
         {
-            //(float X, float Y) cursorRatio = (elementCursor.X / oldSize.Width, elementCursor.Y / oldSize.Height);
-            (float X, float Y) newCursorPosition = (elementCursor.X / currentScale, elementCursor.Y / currentScale);
-
-            Point result = new Point((int)(elementCursor.X - newCursorPosition.X), (int)(elementCursor.Y - newCursorPosition.Y));
-            return result;
+            float resultCursorX = controlCursor.X / scale + scroll.X;
+            float resultCursorY = controlCursor.Y / scale + scroll.Y;
+            return (resultCursorX, resultCursorY);
         }
 
-        private Point GetRelativeCoord(Point absPoint, float scale)
+        private (float, float) GetScroll(Point controlCursor, (float X, float Y) imageCursor, float scale)
         {
-            absPoint.X = (int)(absPoint.X / scale);
-            absPoint.Y = (int)(absPoint.Y / scale);
-            absPoint.X += shift.X;
-            absPoint.Y += shift.Y;
-            if (absPoint.X < 0)
-            {
-                absPoint.X = 0;
-            }
-            if (absPoint.Y < 0)
-            {
-                absPoint.Y = 0;
-            }
-            //if (absPoint.X > Size.Width / currentScale)
-            //{
-            //    absPoint.X = (int)(Size.Width / currentScale);
-            //}
-            //if (absPoint.Y > Size.Height / currentScale)
-            //{
-            //    absPoint.X = (int)(Size.Height / currentScale);
-            //}
-            //absPoint.X = (int)(absPoint.X * currentScale);
-            //absPoint.Y = (int)(absPoint.Y * currentScale);
-            return absPoint;
+            float resultScrollX = imageCursor.X - controlCursor.X / scale;
+            float resultScrollY = imageCursor.Y - controlCursor.Y / scale;
+            return (resultScrollX, resultScrollY);
         }
 
-        private void DisplayUserControl_MouseClick(object sender, MouseEventArgs e)
+        private void DisplayUserControl_MouseMove(object sender, MouseEventArgs e)
         {
-            Point relativeCursorPos = PointToClient(Cursor.Position);
-            TmpDrawRect(GetRelativeCoord(relativeCursorPos, currentScale));
+            Point controlCursor = PointToClient(Cursor.Position);
+            (float X, float Y) imageCursor = GetImageCursor(controlCursor, Scroll, currentScale);
 
-        }
-
-        public void TmpDrawRect(Point cursor)
-        {
-            //Temporary function to draw rect by coord
-            Graphics g = Graphics.FromImage(origin);
-            Rectangle rect = new Rectangle(cursor.X, cursor.Y, 10, 10);
-            g.DrawRectangle(new Pen(Color.Red, .5f), rect);
-            myRedraw = true;
-            Refresh();
+            System.Diagnostics.Debug.WriteLine("_____________________________________________");
+            System.Diagnostics.Debug.WriteLine("controlCursor is: X = " + controlCursor.X + " Y = " + controlCursor.Y);
+            System.Diagnostics.Debug.WriteLine("imageCursor is: X = " + imageCursor.X + " Y = " + imageCursor.Y);
+            System.Diagnostics.Debug.WriteLine("currentScale is: " + currentScale.ToString());
+            System.Diagnostics.Debug.WriteLine("Scroll Value is: X = " + Scroll.X + " Y = " + Scroll.Y);
             return;
+
         }
     }
 }
