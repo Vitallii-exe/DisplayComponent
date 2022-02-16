@@ -29,7 +29,7 @@
             Point relativeCursorPos = PointToClient(Cursor.Position);
             relativeCursorPos = GetRelativeCoord(relativeCursorPos, scaleBeforeChanging);
 
-            shift = GetCoordToScaleWithCursorBinding(relativeCursorPos, oldSize, (Size.Width / currentScale, Size.Height / currentScale));
+            shift = GetCoordToScaleWithCursorBinding(relativeCursorPos);
             myRedraw = true;
             Invalidate();
             System.Diagnostics.Debug.WriteLine("Now scale is: " + currentScale);
@@ -51,7 +51,7 @@
             return;
         }
 
-        private Point GetCoordToScaleWithCursorBinding(Point elementCursor, (float Width, float Height) oldSize, (float Width, float Height) newSize)
+        private Point GetCoordToScaleWithCursorBinding(Point elementCursor)
         {
             //(float X, float Y) cursorRatio = (elementCursor.X / oldSize.Width, elementCursor.Y / oldSize.Height);
             (float X, float Y) newCursorPosition = (elementCursor.X / currentScale, elementCursor.Y / currentScale);
