@@ -1,4 +1,4 @@
-﻿namespace TestCorrectingCoords
+﻿namespace ImageDisplayComponent
 {
     partial class DisplayUserControl
     {
@@ -36,7 +36,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Name = "DisplayUserControl";
             this.Size = new System.Drawing.Size(587, 359);
-            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.DisplayUserControl_MouseMove);
+            this.Load += new System.EventHandler(this.DisplayUserControlLoad);
             this.ResumeLayout(false);
 
         }

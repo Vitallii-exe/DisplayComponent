@@ -1,4 +1,4 @@
-namespace TestCorrectingCoords
+namespace ImageDisplayComponent
 {
     internal static class Program
     {

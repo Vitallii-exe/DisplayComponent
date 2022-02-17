@@ -1,4 +1,4 @@
-﻿namespace TestCorrectingCoords
+﻿namespace ImageDisplayComponent
 {
     public partial class DisplayUserControl : UserControl
     {

@@ -1,17 +1,21 @@
-﻿namespace TestCorrectingCoords
+﻿namespace ImageDisplayComponent
 {
     public partial class DisplayUserControl : UserControl
     {
         float currentScale = 1F;
         Image origin;
-        Point shift = new Point(0, 0);
         (float X, float Y) Scroll;
+        Bitmap buffer;
+        Rectangle currentControlRect;
+        float[] scaleSteps = { 0.25F, 0.5F, 1F, 1.5F, 2F, 3F, 4F, 5F };
+        float scaleFixedStep = 0.5F;
+        int currentScaleStepIndex = 2;
         bool myRedraw = true;
 
         public DisplayUserControl()
         {
             InitializeComponent();
-            origin = Properties.Resources.templateImage2;
+            origin = Properties.Resources.templateImage3;
         }
 
         private void ScaleChangedByWheel(bool isScaleUp)
@@ -19,18 +23,56 @@
             Point controlCursor = PointToClient(Cursor.Position);
             (float X, float Y) imageCursor = GetImageCursor(controlCursor, Scroll, currentScale);
 
+            bool isOutOfRange = false;
             if (isScaleUp)
             {
-                currentScale += 0.1F;
+                if (currentScaleStepIndex < scaleSteps.Length - 1)
+                {
+                    currentScaleStepIndex += 1;
+                }
+                else
+                {
+                    isOutOfRange = true;
+                }
             }
             else
             {
-                currentScale -= 0.1F;
+                if (currentScaleStepIndex > 0)
+                {
+                    currentScaleStepIndex -= 1;
+                }
+                else
+                {
+                    isOutOfRange = true;
+                }
+            }
+            if (!isOutOfRange)
+            {
+                currentScale = scaleSteps[currentScaleStepIndex];
+            }
+            else
+            {
+                if (isScaleUp)
+                {
+                    currentScale += scaleFixedStep;
+                }
             }
             Scroll = GetScroll(controlCursor, imageCursor, currentScale);
+            //PrepareBuffer();
             myRedraw = true;
             Invalidate();
 
+            return;
+        }
+
+        private void PrepareBuffer()
+        {
+            Graphics bufferGraphics = Graphics.FromImage(buffer);
+            bufferGraphics.Clear(BackColor);
+
+            bufferGraphics.DrawImage(origin, currentControlRect, Scroll.X, Scroll.Y, 
+                                     Size.Width / currentScale, Size.Height / currentScale,
+                                     GraphicsUnit.Pixel);
             return;
         }
 
@@ -39,14 +81,19 @@
             base.OnPaint(e);
             if (myRedraw)
             {
-                Rectangle destRect = new Rectangle(0, 0, Size.Width, Size.Height);
-                GraphicsUnit units = GraphicsUnit.Pixel;
-
-                e.Graphics.DrawImage(origin, destRect, Scroll.X, Scroll.Y, Size.Width / currentScale, Size.Height / currentScale, units);
+                PrepareBuffer();
+                e.Graphics.DrawImage(buffer, 0, 0);
                 myRedraw = false;
             }
-            //oldSize = (Size.Width, Size.Height);
             return;
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            if (!myRedraw)
+            {
+                base.OnPaintBackground(e);
+            }
         }
 
         private (float, float) GetImageCursor(Point controlCursor, (float X, float Y) scroll, float scale)
@@ -75,6 +122,14 @@
             System.Diagnostics.Debug.WriteLine("Scroll Value is: X = " + Scroll.X + " Y = " + Scroll.Y);
             return;
 
+        }
+
+        private void DisplayUserControlLoad(object sender, EventArgs e)
+        {
+            buffer = new Bitmap(Size.Width, Size.Height);
+            currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
+            PrepareBuffer();
+            return;
         }
     }
 }

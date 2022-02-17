@@ -1,4 +1,4 @@
-﻿namespace TestCorrectingCoords
+﻿namespace ImageDisplayComponent
 {
     partial class Form1
     {
@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.displayUserControl = new TestCorrectingCoords.DisplayUserControl();
+            this.displayUserControl = new ImageDisplayComponent.DisplayUserControl();
             this.SuspendLayout();
             // 
             // displayUserControl
