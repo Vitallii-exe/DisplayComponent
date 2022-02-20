@@ -1,7 +1,10 @@
-﻿namespace ImageDisplayComponent
+﻿using System.Runtime.InteropServices;
+
+namespace ImageDisplayComponent
 {
     public partial class DisplayUserControl : UserControl
     {
+
         float currentScale = 1F;
         Image origin;
         (float X, float Y) Scroll;
@@ -12,10 +15,29 @@
         int currentScaleStepIndex = 2;
         bool myRedraw = true;
 
+        int lastVScroll = 0;
+        int lastHScroll = 0;
+
         public DisplayUserControl()
         {
             InitializeComponent();
             origin = Properties.Resources.templateImage3;
+        }
+
+        private void DisplayUserControlLoad(object sender, EventArgs e)
+        {
+            buffer = new Bitmap(Size.Width, Size.Height);
+            currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
+            PrepareBuffer();
+            vScrollBar.Height = Height;
+            hScrollBar.Width = Width;
+
+            vScrollBar.Maximum = (int)(origin.Height * currentScale);
+            vScrollBar.LargeChange = Size.Height;
+
+            hScrollBar.Maximum = (int)(origin.Width * currentScale);
+            hScrollBar.LargeChange = Size.Width;
+            return;
         }
 
         private void ScaleChangedByWheel(bool isScaleUp)
@@ -58,11 +80,35 @@
                 }
             }
             Scroll = GetScroll(controlCursor, imageCursor, currentScale);
-            //PrepareBuffer();
+
+            vScrollBar.Maximum = (int)(origin.Height * currentScale);
+            hScrollBar.Maximum = (int)(origin.Width * currentScale);
+
+            int newVScrollValue = ConfirmScrollBarValue((int)Scroll.Y, vScrollBar.Maximum, vScrollBar.Minimum, currentScale);
+            int newHScrollValue = ConfirmScrollBarValue((int)Scroll.X, hScrollBar.Maximum, hScrollBar.Minimum, currentScale);
+
+
+            vScrollBar.Value = newVScrollValue;
+            hScrollBar.Value = newHScrollValue;
             myRedraw = true;
             Invalidate();
 
             return;
+        }
+
+        private int ConfirmScrollBarValue(int shift, int maximum, int minimum, float scale)
+        {
+            int newValue = (int)(scale * shift);
+
+            if (newValue < minimum)
+            {
+                newValue = minimum;
+            }
+            else if (newValue > maximum)
+            {
+                newValue = maximum;
+            }
+            return newValue;
         }
 
         private void PrepareBuffer()
@@ -70,7 +116,7 @@
             Graphics bufferGraphics = Graphics.FromImage(buffer);
             bufferGraphics.Clear(BackColor);
 
-            bufferGraphics.DrawImage(origin, currentControlRect, Scroll.X, Scroll.Y, 
+            bufferGraphics.DrawImage(origin, currentControlRect, Scroll.X, Scroll.Y,
                                      Size.Width / currentScale, Size.Height / currentScale,
                                      GraphicsUnit.Pixel);
             return;
@@ -94,6 +140,7 @@
             {
                 base.OnPaintBackground(e);
             }
+            return;
         }
 
         private (float, float) GetImageCursor(Point controlCursor, (float X, float Y) scroll, float scale)
@@ -124,11 +171,29 @@
 
         }
 
-        private void DisplayUserControlLoad(object sender, EventArgs e)
+        private void vScrollBarValueChanged(object sender, EventArgs e)
         {
-            buffer = new Bitmap(Size.Width, Size.Height);
-            currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
-            PrepareBuffer();
+            if (Math.Abs(lastVScroll - vScrollBar.Value) >= 5 * currentScale)
+            {
+                Scroll.Y = vScrollBar.Value / currentScale;
+                PrepareBuffer();
+                myRedraw = true;
+                Invalidate();
+                lastVScroll = vScrollBar.Value;
+            }
+            return;
+        }
+
+        private void hScrollBarValueChanged(object sender, EventArgs e)
+        {
+            if (Math.Abs(lastHScroll - hScrollBar.Value) >= 5 * currentScale)
+            {
+                Scroll.X = hScrollBar.Value / currentScale;
+                PrepareBuffer();
+                myRedraw = true;
+                Invalidate();
+                lastVScroll = hScrollBar.Value;
+            }
             return;
         }
     }

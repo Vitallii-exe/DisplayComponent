@@ -28,12 +28,35 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.vScrollBar = new System.Windows.Forms.VScrollBar();
+            this.hScrollBar = new System.Windows.Forms.HScrollBar();
             this.SuspendLayout();
+            // 
+            // vScrollBar
+            // 
+            this.vScrollBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.vScrollBar.Location = new System.Drawing.Point(562, 0);
+            this.vScrollBar.Name = "vScrollBar";
+            this.vScrollBar.Size = new System.Drawing.Size(25, 359);
+            this.vScrollBar.TabIndex = 0;
+            this.vScrollBar.ValueChanged += new System.EventHandler(this.vScrollBarValueChanged);
+            // 
+            // hScrollBar
+            // 
+            this.hScrollBar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.hScrollBar.Location = new System.Drawing.Point(0, 336);
+            this.hScrollBar.Name = "hScrollBar";
+            this.hScrollBar.Size = new System.Drawing.Size(562, 26);
+            this.hScrollBar.TabIndex = 1;
+            this.hScrollBar.ValueChanged += new System.EventHandler(this.hScrollBarValueChanged);
             // 
             // DisplayUserControl
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.hScrollBar);
+            this.Controls.Add(this.vScrollBar);
             this.Name = "DisplayUserControl";
             this.Size = new System.Drawing.Size(587, 359);
             this.Load += new System.EventHandler(this.DisplayUserControlLoad);
@@ -42,5 +65,8 @@
         }
 
         #endregion
+
+        private VScrollBar vScrollBar;
+        private HScrollBar hScrollBar;
     }
 }
