@@ -37,13 +37,24 @@
                 {
                     if (wParam.delta == wheelForward)
                     {
-                        //HorizontalScrollChanged(true);
+                        ScrollWheelMove(true, hScrollBar, false);
                     }
                     else if (wParam.delta == wheelBackward)
                     {
-                        //HorizontalScrollChanged(false);
+                        ScrollWheelMove(false, hScrollBar, false);
                     }
                     return;
+                }
+                else
+                {
+                    if (wParam.delta == wheelForward)
+                    {
+                        ScrollWheelMove(false, vScrollBar);
+                    }
+                    else if (wParam.delta == wheelBackward)
+                    {
+                        ScrollWheelMove(true, vScrollBar);
+                    }
                 }
             }
             //else if (m.Msg == WM_PAINT)
