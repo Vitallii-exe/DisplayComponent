@@ -16,9 +16,6 @@ namespace ImageDisplayComponent
 
         bool isBlockScrollValueChangedEvent = false;
 
-        int lastVScroll = 0;
-        int lastHScroll = 0;
-
         public DisplayUserControl()
         {
             InitializeComponent();
@@ -91,8 +88,28 @@ namespace ImageDisplayComponent
             vScrollBar.Maximum = (int)(origin.Height * currentScale);
             hScrollBar.Maximum = (int)(origin.Width * currentScale);
 
-            int newVScrollValue = ConfirmScrollBarValue(originZoneShift.Y, vScrollBar.Maximum - vScrollBar.LargeChange, vScrollBar.Minimum, currentScale);
-            int newHScrollValue = ConfirmScrollBarValue(originZoneShift.X, hScrollBar.Maximum - hScrollBar.LargeChange, hScrollBar.Minimum, currentScale);
+            int newVScrollValue = (int)(originZoneShift.Y * currentScale);//ConfirmScrollBarValue(originZoneShift.Y, vScrollBar.Maximum, vScrollBar.Minimum, currentScale);
+            int newHScrollValue = (int)(originZoneShift.X * currentScale);//ConfirmScrollBarValue(originZoneShift.X, hScrollBar.Maximum, hScrollBar.Minimum, currentScale);
+
+            if (newVScrollValue > vScrollBar.Maximum - vScrollBar.LargeChange)
+            {
+                vScrollBar.Maximum = newVScrollValue + vScrollBar.LargeChange;
+            }
+
+            if (newHScrollValue > hScrollBar.Maximum - hScrollBar.LargeChange)
+            {
+                hScrollBar.Maximum = newHScrollValue + hScrollBar.LargeChange;
+            }
+
+            if (newVScrollValue < vScrollBar.Minimum)
+            {
+                vScrollBar.Minimum = newVScrollValue;
+            }
+
+            if (newHScrollValue < hScrollBar.Minimum)
+            {
+                hScrollBar.Minimum = newHScrollValue;
+            }
 
             vScrollBar.Value = newVScrollValue;
             hScrollBar.Value = newHScrollValue;
@@ -108,7 +125,7 @@ namespace ImageDisplayComponent
 
         private bool UpdateScrollVisible(ScrollBar scrollBar)
         {
-            if (scrollBar.Maximum - scrollBar.LargeChange < 0)
+            if (scrollBar.Maximum < scrollBar.LargeChange)
             {
                 return false;
             }
@@ -134,18 +151,18 @@ namespace ImageDisplayComponent
             return newValue;
         }
 
-        private void RedrawImage(Graphics bufferGraphics)
+        private void RedrawImage(Graphics userControlGraphics)
         {
-            bufferGraphics.Clear(BackColor);
+            userControlGraphics.Clear(BackColor);
             if (currentScale < 1)
             {
-                bufferGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
+                userControlGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
             }
             else
             {
-                bufferGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                userControlGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             }
-            bufferGraphics.DrawImage(origin, currentControlRect, originZoneShift.X, originZoneShift.Y,
+            userControlGraphics.DrawImage(origin, currentControlRect, originZoneShift.X, originZoneShift.Y,
                                      Size.Width / currentScale, Size.Height / currentScale,
                                      GraphicsUnit.Pixel);
             return;
@@ -168,25 +185,67 @@ namespace ImageDisplayComponent
         {
             bool isVertical = sender.Equals(vScrollBar);
             ScrollBar scrollBar;
-            ref int lastScroll = ref lastHScroll;
-            ref float currentScroll = ref originZoneShift.Y;
+            ref float currentZoneShift = ref originZoneShift.Y;
             if (isVertical)
             {
                 scrollBar = vScrollBar;
-                lastScroll = ref lastVScroll;
-                currentScroll = ref originZoneShift.Y;
+                currentZoneShift = ref originZoneShift.Y;
+
+                if (scrollBar.Maximum > origin.Height * currentScale)
+                {
+                    if (scrollBar.Value < scrollBar.Maximum - scrollBar.LargeChange)
+                    {
+                        scrollBar.Maximum = scrollBar.Value + scrollBar.LargeChange;
+                    }
+                }
+
+                else if (scrollBar.Minimum < 0)
+                {
+                    if (scrollBar.Value > scrollBar.Minimum)
+                    {
+                        if (scrollBar.Value < 0)
+                        {
+                            scrollBar.Minimum = scrollBar.Value;
+                        }
+                        else
+                        {
+                            scrollBar.Minimum = 0;
+                        }
+                    }
+                }
             }
             else
             {
                 scrollBar = hScrollBar;
-                lastScroll = ref lastHScroll;
-                currentScroll = ref originZoneShift.X;
+                currentZoneShift = ref originZoneShift.X;
+
+                if (scrollBar.Maximum > origin.Width * currentScale)
+                {
+                    if (scrollBar.Value < scrollBar.Maximum - scrollBar.LargeChange)
+                    {
+                        scrollBar.Maximum = scrollBar.Value + scrollBar.LargeChange;
+                    }
+                }
+
+                else if (scrollBar.Minimum < 0)
+                {
+                    if (scrollBar.Value > scrollBar.Minimum)
+                    {
+                        if (scrollBar.Value < 0)
+                        {
+                            scrollBar.Minimum = scrollBar.Value;
+                        }
+                        else
+                        {
+                            scrollBar.Minimum = 0;
+                        }
+                    }
+                }
             }
             if (!isBlockScrollValueChangedEvent)
             {
-                currentScroll = scrollBar.Value / currentScale;
+                currentZoneShift = scrollBar.Value / currentScale;
                 Refresh();
-                lastScroll = scrollBar.Value;
             }
             return;
         }
@@ -202,17 +261,16 @@ namespace ImageDisplayComponent
             {
                 newValue = scrollBar.Value - (int)(scrollCoefficient * currentScale);
             }
+
             scrollBar.Value = ConfirmScrollBarValue(newValue, scrollBar.Maximum - scrollBar.LargeChange, scrollBar.Minimum);
 
             if (isVertical)
             {
                 originZoneShift.Y = scrollBar.Value / currentScale;
-                lastVScroll = scrollBar.Value;
             }
             else
             {
                 originZoneShift.X = scrollBar.Value / currentScale;
-                lastHScroll = scrollBar.Value;
             }
             Refresh();
             return;
