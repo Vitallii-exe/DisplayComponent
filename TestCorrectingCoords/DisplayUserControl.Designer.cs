@@ -40,7 +40,7 @@
             this.vScrollBar.Name = "vScrollBar";
             this.vScrollBar.Size = new System.Drawing.Size(25, 359);
             this.vScrollBar.TabIndex = 0;
-            this.vScrollBar.ValueChanged += new System.EventHandler(this.vScrollBarValueChanged);
+            this.vScrollBar.ValueChanged += new System.EventHandler(this.ScrollBarsValueChanged);
             // 
             // hScrollBar
             // 
@@ -50,7 +50,7 @@
             this.hScrollBar.Name = "hScrollBar";
             this.hScrollBar.Size = new System.Drawing.Size(562, 25);
             this.hScrollBar.TabIndex = 1;
-            this.hScrollBar.ValueChanged += new System.EventHandler(this.hScrollBarValueChanged);
+            this.hScrollBar.ValueChanged += new System.EventHandler(this.ScrollBarsValueChanged);
             // 
             // DisplayUserControl
             // 
@@ -58,6 +58,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.hScrollBar);
             this.Controls.Add(this.vScrollBar);
+            this.DoubleBuffered = true;
             this.Name = "DisplayUserControl";
             this.Size = new System.Drawing.Size(587, 359);
             this.Load += new System.EventHandler(this.DisplayUserControlLoad);

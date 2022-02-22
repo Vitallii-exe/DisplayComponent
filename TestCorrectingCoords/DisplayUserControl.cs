@@ -7,15 +7,13 @@ namespace ImageDisplayComponent
 
         float currentScale = 1F;
         Image origin;
-        (float X, float Y) Scroll;
-        Bitmap buffer;
+        (float X, float Y) originZoneShift;
         Rectangle currentControlRect;
         float[] scaleSteps = { 0.25F, 0.5F, 1F, 1.5F, 2F, 3F, 4F, 5F };
         float scaleFixedStep = 0.5F;
         int scrollCoefficient = 10;
         int currentScaleStepIndex = 2;
 
-        bool myRedraw = true;
         bool isBlockScrollValueChangedEvent = false;
 
         int lastVScroll = 0;
@@ -29,11 +27,7 @@ namespace ImageDisplayComponent
 
         private void DisplayUserControlLoad(object sender, EventArgs e)
         {
-            buffer = new Bitmap(Size.Width, Size.Height);
             currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
-            PrepareBuffer();
-            //vScrollBar.Height = Height;
-            //hScrollBar.Width = Width;
 
             vScrollBar.Maximum = (int)(origin.Height * currentScale);
             vScrollBar.LargeChange = Size.Height;
@@ -55,7 +49,7 @@ namespace ImageDisplayComponent
         private void ScaleChangedByWheel(bool isScaleUp)
         {
             Point controlCursor = PointToClient(Cursor.Position);
-            (float X, float Y) imageCursor = GetImageCursor(controlCursor, Scroll, currentScale);
+            (float X, float Y) imageCursor = GetImageCursor(controlCursor, originZoneShift, currentScale);
 
             bool isOutOfRange = false;
             if (isScaleUp)
@@ -92,15 +86,14 @@ namespace ImageDisplayComponent
                 }
             }
             isBlockScrollValueChangedEvent = true;
-            Scroll = GetScroll(controlCursor, imageCursor, currentScale);
+            originZoneShift = GetScroll(controlCursor, imageCursor, currentScale);
 
             vScrollBar.Maximum = (int)(origin.Height * currentScale);
             hScrollBar.Maximum = (int)(origin.Width * currentScale);
 
-            int newVScrollValue = ConfirmScrollBarValue(Scroll.Y, vScrollBar.Maximum, vScrollBar.Minimum, currentScale);
-            int newHScrollValue = ConfirmScrollBarValue(Scroll.X, hScrollBar.Maximum, hScrollBar.Minimum, currentScale);
+            int newVScrollValue = ConfirmScrollBarValue(originZoneShift.Y, vScrollBar.Maximum - vScrollBar.LargeChange, vScrollBar.Minimum, currentScale);
+            int newHScrollValue = ConfirmScrollBarValue(originZoneShift.X, hScrollBar.Maximum - hScrollBar.LargeChange, hScrollBar.Minimum, currentScale);
 
-            
             vScrollBar.Value = newVScrollValue;
             hScrollBar.Value = newHScrollValue;
 
@@ -108,9 +101,7 @@ namespace ImageDisplayComponent
             vScrollBar.Visible = UpdateScrollVisible(vScrollBar);
 
             isBlockScrollValueChangedEvent = false;
-
-            myRedraw = true;
-            Invalidate();
+            Refresh();
 
             return;
         }
@@ -136,19 +127,25 @@ namespace ImageDisplayComponent
                 newValue = maximum;
             }
 
-            else if (newValue < minimum)
+            if (newValue < minimum)
             {
                 newValue = minimum;
             }
             return newValue;
         }
 
-        private void PrepareBuffer()
+        private void RedrawImage(Graphics bufferGraphics)
         {
-            Graphics bufferGraphics = Graphics.FromImage(buffer);
             bufferGraphics.Clear(BackColor);
-
-            bufferGraphics.DrawImage(origin, currentControlRect, Scroll.X, Scroll.Y,
+            if (currentScale < 1)
+            {
+                bufferGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
+            }
+            else
+            {
+                bufferGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            }
+            bufferGraphics.DrawImage(origin, currentControlRect, originZoneShift.X, originZoneShift.Y,
                                      Size.Width / currentScale, Size.Height / currentScale,
                                      GraphicsUnit.Pixel);
             return;
@@ -167,34 +164,29 @@ namespace ImageDisplayComponent
             return (resultScrollX, resultScrollY);
         }
 
-        private void vScrollBarValueChanged(object sender, EventArgs e)
+        private void ScrollBarsValueChanged(object sender, EventArgs e)
         {
-            if (!isBlockScrollValueChangedEvent)
+            bool isVertical = sender.Equals(vScrollBar);
+            ScrollBar scrollBar;
+            ref int lastScroll = ref lastHScroll;
+            ref float currentScroll = ref originZoneShift.Y;
+            if (isVertical)
             {
-                if (Math.Abs(lastVScroll - vScrollBar.Value) >= 5 * currentScale)
-                {
-                    Scroll.Y = vScrollBar.Value / currentScale;
-                    PrepareBuffer();
-                    myRedraw = true;
-                    Invalidate();
-                    lastVScroll = vScrollBar.Value;
-                }
+                scrollBar = vScrollBar;
+                lastScroll = ref lastVScroll;
+                currentScroll = ref originZoneShift.Y;
             }
-            return;
-        }
-
-        private void hScrollBarValueChanged(object sender, EventArgs e)
-        {
+            else
+            {
+                scrollBar = hScrollBar;
+                lastScroll = ref lastHScroll;
+                currentScroll = ref originZoneShift.X;
+            }
             if (!isBlockScrollValueChangedEvent)
             {
-                if (Math.Abs(lastHScroll - hScrollBar.Value) >= 5 * currentScale)
-                {
-                    Scroll.X = hScrollBar.Value / currentScale;
-                    PrepareBuffer();
-                    myRedraw = true;
-                    Invalidate();
-                    lastHScroll = hScrollBar.Value;
-                }
+                currentScroll = scrollBar.Value / currentScale;
+                Refresh();
+                lastScroll = scrollBar.Value;
             }
             return;
         }
@@ -214,46 +206,28 @@ namespace ImageDisplayComponent
 
             if (isVertical)
             {
-                Scroll.Y = scrollBar.Value / currentScale;
-            }
-            else
-            {
-                Scroll.X = scrollBar.Value / currentScale;
-            }
-            PrepareBuffer();
-            myRedraw = true;
-            Invalidate();
-
-            if (isVertical)
-            {
+                originZoneShift.Y = scrollBar.Value / currentScale;
                 lastVScroll = scrollBar.Value;
             }
             else
             {
+                originZoneShift.X = scrollBar.Value / currentScale;
                 lastHScroll = scrollBar.Value;
             }
-            
+            Refresh();
             return;
         }
 
         protected override void OnPaint(PaintEventArgs e)
         {
             base.OnPaint(e);
-            if (myRedraw)
-            {
-                PrepareBuffer();
-                e.Graphics.DrawImage(buffer, 0, 0);
-                myRedraw = false;
-            }
+            RedrawImage(e.Graphics);
             return;
         }
 
         protected override void OnPaintBackground(PaintEventArgs e)
         {
-            if (!myRedraw)
-            {
-                base.OnPaintBackground(e);
-            }
+            // Ignore UserControl backgroung drawing before OnPaint()
             return;
         }
     }
