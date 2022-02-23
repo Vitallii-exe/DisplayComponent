@@ -1,6 +1,4 @@
-﻿using System.Runtime.InteropServices;
-
-namespace ImageDisplayComponent
+﻿namespace ImageDisplayComponent
 {
     public partial class DisplayUserControl : UserControl
     {
@@ -15,6 +13,8 @@ namespace ImageDisplayComponent
         int currentScaleStepIndex = 2;
 
         bool isBlockScrollValueChangedEvent = false;
+        bool isMiddleMouseButtonHolding = false;
+        (float X, float Y) initialCursorPosition;
 
         public DisplayUserControl()
         {
@@ -22,27 +22,41 @@ namespace ImageDisplayComponent
             origin = Properties.Resources.templateImage3;
         }
 
-        private void DisplayUserControlLoad(object sender, EventArgs e)
+        private void SynchronizeScrollBarsWithShift()
         {
-            currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
-
             vScrollBar.Maximum = (int)(origin.Height * currentScale);
-            vScrollBar.LargeChange = Size.Height;
-            if (vScrollBar.Maximum - vScrollBar.LargeChange < 0)
-            {
-                vScrollBar.Visible = false;
-            }
-
             hScrollBar.Maximum = (int)(origin.Width * currentScale);
-            hScrollBar.LargeChange = Size.Width;
-            if (hScrollBar.Maximum - hScrollBar.LargeChange < 0)
+
+            int newVScrollValue = (int)(originZoneShift.Y * currentScale);
+            int newHScrollValue = (int)(originZoneShift.X * currentScale);
+
+            if (newVScrollValue > vScrollBar.Maximum - vScrollBar.LargeChange)
             {
-                hScrollBar.Visible = false;
+                vScrollBar.Maximum = newVScrollValue + vScrollBar.LargeChange;
             }
 
+            if (newHScrollValue > hScrollBar.Maximum - hScrollBar.LargeChange)
+            {
+                hScrollBar.Maximum = newHScrollValue + hScrollBar.LargeChange;
+            }
+
+            if (newVScrollValue < vScrollBar.Minimum)
+            {
+                vScrollBar.Minimum = newVScrollValue;
+            }
+
+            if (newHScrollValue < hScrollBar.Minimum)
+            {
+                hScrollBar.Minimum = newHScrollValue;
+            }
+
+            vScrollBar.Value = newVScrollValue;
+            hScrollBar.Value = newHScrollValue;
+
+            hScrollBar.Visible = UpdateScrollVisible(hScrollBar);
+            vScrollBar.Visible = UpdateScrollVisible(vScrollBar);
             return;
         }
-
         private void ScaleChangedByWheel(bool isScaleUp)
         {
             Point controlCursor = PointToClient(Cursor.Position);
@@ -84,39 +98,7 @@ namespace ImageDisplayComponent
             }
             isBlockScrollValueChangedEvent = true;
             originZoneShift = GetScroll(controlCursor, imageCursor, currentScale);
-
-            vScrollBar.Maximum = (int)(origin.Height * currentScale);
-            hScrollBar.Maximum = (int)(origin.Width * currentScale);
-
-            int newVScrollValue = (int)(originZoneShift.Y * currentScale);//ConfirmScrollBarValue(originZoneShift.Y, vScrollBar.Maximum, vScrollBar.Minimum, currentScale);
-            int newHScrollValue = (int)(originZoneShift.X * currentScale);//ConfirmScrollBarValue(originZoneShift.X, hScrollBar.Maximum, hScrollBar.Minimum, currentScale);
-
-            if (newVScrollValue > vScrollBar.Maximum - vScrollBar.LargeChange)
-            {
-                vScrollBar.Maximum = newVScrollValue + vScrollBar.LargeChange;
-            }
-
-            if (newHScrollValue > hScrollBar.Maximum - hScrollBar.LargeChange)
-            {
-                hScrollBar.Maximum = newHScrollValue + hScrollBar.LargeChange;
-            }
-
-            if (newVScrollValue < vScrollBar.Minimum)
-            {
-                vScrollBar.Minimum = newVScrollValue;
-            }
-
-            if (newHScrollValue < hScrollBar.Minimum)
-            {
-                hScrollBar.Minimum = newHScrollValue;
-            }
-
-            vScrollBar.Value = newVScrollValue;
-            hScrollBar.Value = newHScrollValue;
-
-            hScrollBar.Visible = UpdateScrollVisible(hScrollBar);
-            vScrollBar.Visible = UpdateScrollVisible(vScrollBar);
-
+            SynchronizeScrollBarsWithShift();
             isBlockScrollValueChangedEvent = false;
             Refresh();
 
@@ -125,19 +107,12 @@ namespace ImageDisplayComponent
 
         private bool UpdateScrollVisible(ScrollBar scrollBar)
         {
-            if (scrollBar.Maximum < scrollBar.LargeChange)
-            {
-                return false;
-            }
-            else
-            {
-                return true;
-            }
+            return scrollBar.Maximum > scrollBar.LargeChange;
         }
 
-        private int ConfirmScrollBarValue(float shift, int maximum, int minimum, float scale = 1F)
+        private int ConfirmScrollBarValue(float shift, int maximum, int minimum)
         {
-            int newValue = (int)(scale * shift);
+            int newValue = (int)(shift);
 
             if (newValue > maximum)
             {
@@ -181,75 +156,6 @@ namespace ImageDisplayComponent
             return (resultScrollX, resultScrollY);
         }
 
-        private void ScrollBarsValueChanged(object sender, EventArgs e)
-        {
-            bool isVertical = sender.Equals(vScrollBar);
-            ScrollBar scrollBar;
-            ref float currentZoneShift = ref originZoneShift.Y;
-            if (isVertical)
-            {
-                scrollBar = vScrollBar;
-                currentZoneShift = ref originZoneShift.Y;
-
-                if (scrollBar.Maximum > origin.Height * currentScale)
-                {
-                    if (scrollBar.Value < scrollBar.Maximum - scrollBar.LargeChange)
-                    {
-                        scrollBar.Maximum = scrollBar.Value + scrollBar.LargeChange;
-                    }
-                }
-
-                else if (scrollBar.Minimum < 0)
-                {
-                    if (scrollBar.Value > scrollBar.Minimum)
-                    {
-                        if (scrollBar.Value < 0)
-                        {
-                            scrollBar.Minimum = scrollBar.Value;
-                        }
-                        else
-                        {
-                            scrollBar.Minimum = 0;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                scrollBar = hScrollBar;
-                currentZoneShift = ref originZoneShift.X;
-
-                if (scrollBar.Maximum > origin.Width * currentScale)
-                {
-                    if (scrollBar.Value < scrollBar.Maximum - scrollBar.LargeChange)
-                    {
-                        scrollBar.Maximum = scrollBar.Value + scrollBar.LargeChange;
-                    }
-                }
-
-                else if (scrollBar.Minimum < 0)
-                {
-                    if (scrollBar.Value > scrollBar.Minimum)
-                    {
-                        if (scrollBar.Value < 0)
-                        {
-                            scrollBar.Minimum = scrollBar.Value;
-                        }
-                        else
-                        {
-                            scrollBar.Minimum = 0;
-                        }
-                    }
-                }
-            }
-            if (!isBlockScrollValueChangedEvent)
-            {
-                currentZoneShift = scrollBar.Value / currentScale;
-                Refresh();
-            }
-            return;
-        }
-
         private void ScrollWheelMove(bool isMoveUp, ScrollBar scrollBar, bool isVertical = true)
         {
             int newValue;
@@ -273,19 +179,6 @@ namespace ImageDisplayComponent
                 originZoneShift.X = scrollBar.Value / currentScale;
             }
             Refresh();
-            return;
-        }
-
-        protected override void OnPaint(PaintEventArgs e)
-        {
-            base.OnPaint(e);
-            RedrawImage(e.Graphics);
-            return;
-        }
-
-        protected override void OnPaintBackground(PaintEventArgs e)
-        {
-            // Ignore UserControl backgroung drawing before OnPaint()
             return;
         }
     }

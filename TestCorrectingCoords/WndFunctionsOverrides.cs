@@ -3,7 +3,6 @@
     public partial class DisplayUserControl : UserControl
     {
         const int WM_MOUSEWHEEL = 0x020A;
-        const int WM_PAINT = 0xf;
         const int MK_CONTROL = 0x8;
         const int MK_SHIFT = 0x4;
         const int wheelForward = 120;
@@ -57,14 +56,20 @@
                     }
                 }
             }
-            //else if (m.Msg == WM_PAINT)
-            //{
-            //    if (isBlockRedraw)
-            //    {
-            //        return;
-            //    }
-            //}
             base.WndProc(ref m);
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            RedrawImage(e.Graphics);
+            return;
+        }
+
+        protected override void OnPaintBackground(PaintEventArgs e)
+        {
+            // Ignore UserControl backgroung drawing before OnPaint()
+            return;
         }
     }
 }

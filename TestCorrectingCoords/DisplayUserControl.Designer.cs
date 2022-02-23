@@ -62,6 +62,9 @@
             this.Name = "DisplayUserControl";
             this.Size = new System.Drawing.Size(587, 359);
             this.Load += new System.EventHandler(this.DisplayUserControlLoad);
+            this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.DisplayUserControlMouseDown);
+            this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.DisplayUserControlMouseMove);
+            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.DisplayUserControlMouseUp);
             this.ResumeLayout(false);
 
         }
