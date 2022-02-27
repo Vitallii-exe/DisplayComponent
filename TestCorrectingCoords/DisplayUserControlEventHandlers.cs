@@ -6,6 +6,8 @@
         {
             currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
 
+            draw = new DrawUserRectangles(this);
+
             vScrollBar.Maximum = (int)(origin.Height * currentScale);
             vScrollBar.LargeChange = Size.Height;
             if (vScrollBar.Maximum - vScrollBar.LargeChange < 0)
@@ -96,8 +98,10 @@
             {
                 Point controlCursor = PointToClient(Cursor.Position);
                 isBlockScrollValueChangedEvent = true;
-                originZoneShift = GetScroll(controlCursor, initialCursorPosition, currentScale);
-                SynchronizeScrollBarsWithShift();
+                originZoneShift = CoordinatesCalculator.GetScroll(controlCursor, initialCursorPosition, currentScale);
+
+                SynchronizeScrollBarWithShift(vScrollBar, origin.Height, originZoneShift.Y, currentScale);
+                SynchronizeScrollBarWithShift(hScrollBar, origin.Width, originZoneShift.X, currentScale);
                 isBlockScrollValueChangedEvent = false;
                 Refresh();
             }
@@ -108,7 +112,7 @@
             if (e.Button == MouseButtons.Middle)
             {
                 Point controlCursor = PointToClient(Cursor.Position);
-                initialCursorPosition = GetImageCursor(controlCursor, originZoneShift, currentScale);
+                initialCursorPosition = CoordinatesCalculator.GetImageCursorF(controlCursor, originZoneShift, currentScale);
                 isMiddleMouseButtonHolding = true;
             }
             return;

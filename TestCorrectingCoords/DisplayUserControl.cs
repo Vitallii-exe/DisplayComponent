@@ -1,12 +1,19 @@
 ﻿namespace ImageDisplayComponent
 {
+    public interface IControlDrawable
+    {
+        void DrawOver(Graphics graphics);
+
+    }
     public partial class DisplayUserControl : UserControl
     {
+        IControlDrawable draw;
 
-        float currentScale = 1F;
-        Image origin;
-        (float X, float Y) originZoneShift;
-        Rectangle currentControlRect;
+        public float currentScale = 1F;
+        public Image origin;
+        public (float X, float Y) originZoneShift;
+        public Rectangle currentControlRect;
+
         float[] scaleSteps = { 0.25F, 0.5F, 1F, 1.5F, 2F, 3F, 4F, 5F };
         float scaleFixedStep = 0.5F;
         int scrollCoefficient = 10;
@@ -19,48 +26,32 @@
         public DisplayUserControl()
         {
             InitializeComponent();
-            origin = Properties.Resources.templateImage3;
+            origin = Properties.Resources.templateImage;
         }
 
-        private void SynchronizeScrollBarsWithShift()
+        private void SynchronizeScrollBarWithShift(ScrollBar scrollBar, int imageSize, float shift, float scale)
         {
-            vScrollBar.Maximum = (int)(origin.Height * currentScale);
-            hScrollBar.Maximum = (int)(origin.Width * currentScale);
+            scrollBar.Maximum = (int)(imageSize * scale);
 
-            int newVScrollValue = (int)(originZoneShift.Y * currentScale);
-            int newHScrollValue = (int)(originZoneShift.X * currentScale);
+            int newScrollValue = (int)(shift * scale);
 
-            if (newVScrollValue > vScrollBar.Maximum - vScrollBar.LargeChange)
+            if (newScrollValue > scrollBar.Maximum - scrollBar.LargeChange)
             {
-                vScrollBar.Maximum = newVScrollValue + vScrollBar.LargeChange;
+                vScrollBar.Maximum = newScrollValue + vScrollBar.LargeChange;
             }
 
-            if (newHScrollValue > hScrollBar.Maximum - hScrollBar.LargeChange)
+            if (newScrollValue < scrollBar.Minimum)
             {
-                hScrollBar.Maximum = newHScrollValue + hScrollBar.LargeChange;
+                scrollBar.Minimum = newScrollValue;
             }
-
-            if (newVScrollValue < vScrollBar.Minimum)
-            {
-                vScrollBar.Minimum = newVScrollValue;
-            }
-
-            if (newHScrollValue < hScrollBar.Minimum)
-            {
-                hScrollBar.Minimum = newHScrollValue;
-            }
-
-            vScrollBar.Value = newVScrollValue;
-            hScrollBar.Value = newHScrollValue;
-
-            hScrollBar.Visible = UpdateScrollVisible(hScrollBar);
-            vScrollBar.Visible = UpdateScrollVisible(vScrollBar);
+            scrollBar.Value = newScrollValue;
+            scrollBar.Visible = UpdateScrollVisible(scrollBar);
             return;
         }
         private void ScaleChangedByWheel(bool isScaleUp)
         {
             Point controlCursor = PointToClient(Cursor.Position);
-            (float X, float Y) imageCursor = GetImageCursor(controlCursor, originZoneShift, currentScale);
+            (float X, float Y) imageCursor = CoordinatesCalculator.GetImageCursorF(controlCursor, originZoneShift, currentScale);
 
             bool isOutOfRange = false;
             if (isScaleUp)
@@ -97,8 +88,9 @@
                 }
             }
             isBlockScrollValueChangedEvent = true;
-            originZoneShift = GetScroll(controlCursor, imageCursor, currentScale);
-            SynchronizeScrollBarsWithShift();
+            originZoneShift = CoordinatesCalculator.GetScroll(controlCursor, imageCursor, currentScale);
+            SynchronizeScrollBarWithShift(vScrollBar, origin.Height, originZoneShift.Y, currentScale);
+            SynchronizeScrollBarWithShift(hScrollBar, origin.Width, originZoneShift.X, currentScale);
             isBlockScrollValueChangedEvent = false;
             Refresh();
 
@@ -140,21 +132,11 @@
             userControlGraphics.DrawImage(origin, currentControlRect, originZoneShift.X, originZoneShift.Y,
                                      Size.Width / currentScale, Size.Height / currentScale,
                                      GraphicsUnit.Pixel);
+            draw.DrawOver(userControlGraphics);
+            
             return;
         }
-        private (float, float) GetImageCursor(Point controlCursor, (float X, float Y) scroll, float scale)
-        {
-            float resultCursorX = controlCursor.X / scale + scroll.X;
-            float resultCursorY = controlCursor.Y / scale + scroll.Y;
-            return (resultCursorX, resultCursorY);
-        }
-
-        private (float, float) GetScroll(Point controlCursor, (float X, float Y) imageCursor, float scale)
-        {
-            float resultScrollX = imageCursor.X - controlCursor.X / scale;
-            float resultScrollY = imageCursor.Y - controlCursor.Y / scale;
-            return (resultScrollX, resultScrollY);
-        }
+        
 
         private void ScrollWheelMove(bool isMoveUp, ScrollBar scrollBar, bool isVertical = true)
         {
@@ -180,6 +162,16 @@
             }
             Refresh();
             return;
+        }
+
+        private void DisplayUserControl_MouseClick(object sender, MouseEventArgs e)
+        {
+            //IControlDrawable draw = new DrawUserRectangles(this);
+
+            //Point controlCursor = PointToClient(Cursor.Position);
+            //(float X, float Y) imageCursor = CoordinatesCalculator.GetImageCursor(controlCursor, originZoneShift, currentScale);
+
+            //draw.DrawOver(CreateGraphics(), imageCursor);
         }
     }
 }
