@@ -27,6 +27,7 @@
         {
             InitializeComponent();
             origin = Properties.Resources.templateImage;
+            draw = new DrawUserRectangles(this);
         }
 
         private void SynchronizeScrollBarWithShift(ScrollBar scrollBar, int imageSize, float shift, float scale)

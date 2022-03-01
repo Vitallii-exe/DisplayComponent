@@ -1,7 +1,26 @@
 ﻿namespace ImageDisplayComponent
 {
     public class DrawUserRectangles : IControlDrawable
-    {
+    { enum Border
+        {
+            LeftTop,
+            LeftBottom,
+            RightTop,
+            RightBottom,
+            Left,
+            Right,
+            Top,
+            Bottom,
+            No
+        }
+        enum Condition
+        {
+            Create,
+            Edit
+        }
+        Condition currentCondition = Condition.Create;
+        Border currentBorder = Border.No;
+
         DisplayUserControl display;
         List<Rectangle> rectangles = new List<Rectangle>();
         Rectangle prewiew = new Rectangle(0, 0, 0, 0);
@@ -9,12 +28,13 @@
         (float X, float Y) initialCursorPosition;
         bool isLeftButtonHolding = false;
         bool isTemporaryDraw = false;
+
         public DrawUserRectangles(DisplayUserControl display)
         {
             this.display = display;
-            display.MouseDown += new MouseEventHandler(DisplayMouseDown);
-            display.MouseUp += new MouseEventHandler(DisplayMouseUp);
-            display.MouseMove += new MouseEventHandler(DisplayMouseMove);
+            display.MouseDown += new MouseEventHandler(DisplayMouseDown!);
+            display.MouseUp += new MouseEventHandler(DisplayMouseUp!);
+            display.MouseMove += new MouseEventHandler(DisplayMouseMove!);
 
         }
         void IControlDrawable.DrawOver(Graphics graphics)
@@ -35,12 +55,6 @@
                     graphics.DrawRectangle(Pens.Black, scaledElement);
                 }
             }
-            return;
-        }
-
-        void PrewiewDraw(Graphics graphics, Rectangle rectangle)
-        {
-            graphics.DrawRectangle(Pens.Azure, rectangle);
             return;
         }
 
@@ -104,42 +118,129 @@
             }
             return nearestRectIndex;
         }
-
-        //this.Cursor = System.Windows.Forms.Cursors.No;
-        private Cursor GetCursorView(Rectangle rectangle, Point cursor)
+        private Border GetActiveBorder(Rectangle rectangle, Point cursor)
         {
-            if (Math.Abs(cursor.X - rectangle.Left) < 5 & Math.Abs(cursor.Y - rectangle.Top) < 5)
+            int[] rectCoordinatesX = { rectangle.Left, rectangle.Right };
+            int[] rectCoordinatesY = { rectangle.Top, rectangle.Bottom };
+            //int[] allCoordinates = { rectangle.Left, rectangle.Right, rectangle.Top, rectangle.Bottom };
+            int variantsCount = 0;
+            Border[] diagonalCursors = { Border.LeftTop, Border.LeftBottom, Border.RightTop, Border.RightBottom };
+
+            foreach (int rectCoordX in rectCoordinatesX)
             {
-                return Cursors.SizeNWSE;
+                foreach (int rectCoordY in rectCoordinatesY)
+                {
+                    if (Math.Abs(cursor.X - rectCoordX) < 5 & Math.Abs(cursor.Y - rectCoordY) < 5)
+                    {
+                        return diagonalCursors[variantsCount];
+                    }
+                    else
+                    {
+                        variantsCount += 1;
+                    }
+                }
             }
-            else if (Math.Abs(cursor.X - rectangle.Right) < 5 & Math.Abs(cursor.Y - rectangle.Bottom) < 5)
+            if (Math.Abs(cursor.X - rectangle.Left) < 5)
             {
-                return Cursors.SizeNWSE;
+                return Border.Left;
             }
-            else if (Math.Abs(cursor.X - rectangle.Right) < 5 & Math.Abs(cursor.Y - rectangle.Top) < 5)
+            else if (Math.Abs(cursor.X - rectangle.Right) < 5)
             {
-                return Cursors.SizeNESW;
+                return Border.Right;
             }
-            else if (Math.Abs(cursor.X - rectangle.Left) < 5 & Math.Abs(cursor.Y - rectangle.Bottom) < 5)
+            else if (Math.Abs(cursor.Y - rectangle.Top) < 5)
             {
-                return Cursors.SizeNESW;
+                return Border.Top;
             }
-            else if (Math.Abs(cursor.Y - rectangle.Top) < 5 | Math.Abs(cursor.Y - rectangle.Bottom) < 5)
+            else if (Math.Abs(cursor.Y - rectangle.Bottom) < 5)
             {
-                return Cursors.SizeNS;
+                return Border.Bottom;
             }
-            else if (Math.Abs(cursor.X - rectangle.Left) < 5 | Math.Abs(cursor.X - rectangle.Right) < 5)
+            return Border.No;
+        }
+
+        private Cursor GetCursorView(Border border)
+        {
+            Cursor result = Cursors.Arrow;
+            switch (border)
             {
-                return Cursors.SizeWE;
+                case Border.Left:
+                    result = Cursors.SizeWE;
+                    break;
+                case Border.Right:
+                    result = Cursors.SizeWE;
+                    break;
+                case Border.Top:
+                    result = Cursors.SizeNS;
+                    break;
+                case Border.Bottom:
+                    result = Cursors.SizeNS;
+                    break;
+                case Border.LeftTop:
+                    result = Cursors.SizeNWSE;
+                    break;
+                case Border.LeftBottom:
+                    result = Cursors.SizeNESW;
+                    break;
+                case Border.RightTop:
+                    result = Cursors.SizeNESW;
+                    break;
+                case Border.RightBottom:
+                    result = Cursors.SizeNWSE;
+                    break;
             }
-            return Cursors.Arrow;
+            return result;
+        }
+
+        private Rectangle ResizeRectangle(Rectangle rectangle, Point cursor, Border border)
+        {
+            switch (border)
+            {
+                case Border.Left:
+                    rectangle.Width = rectangle.Right - cursor.X;
+                    rectangle.X = cursor.X;
+                    break;
+                case Border.Right:
+                    rectangle.Width = cursor.X - rectangle.X;
+                    break;
+                case Border.Top:
+                    rectangle.Height = rectangle.Bottom - cursor.Y;
+                    rectangle.Y = cursor.Y;
+                    break;
+                case Border.Bottom:
+                    rectangle.Height = cursor.Y - rectangle.Y;
+                    break;
+                case Border.LeftTop:
+                    rectangle.Width = rectangle.Right - cursor.X;
+                    rectangle.Height = rectangle.Bottom - cursor.Y;
+                    rectangle.Location = cursor;
+                    break;
+                case Border.LeftBottom:
+                    rectangle.Width = rectangle.Right - cursor.X;
+                    rectangle.X = cursor.X;
+                    rectangle.Height = cursor.Y - rectangle.Y;
+                    break;
+                case Border.RightTop:
+                    rectangle.Width = cursor.X - rectangle.X;
+                    rectangle.Height = rectangle.Bottom - cursor.Y;
+                    rectangle.Y = cursor.Y;
+                    break;
+                case Border.RightBottom:
+                    rectangle.Width = cursor.X - rectangle.X;
+                    rectangle.Height = cursor.Y - rectangle.Y;
+                    break;
+            }
+            return rectangle;
         }
         private void DisplayMouseDown(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Left)
             {
                 Point controlCursor = display.PointToClient(Cursor.Position);
-                initialCursorPosition = CoordinatesCalculator.GetImageCursorF(controlCursor, display.originZoneShift, display.currentScale);
+                if (currentCondition == Condition.Create)
+                {
+                    initialCursorPosition = CoordinatesCalculator.GetImageCursorF(controlCursor, display.originZoneShift, display.currentScale);
+                }
                 isLeftButtonHolding = true;
             }
             return;
@@ -152,25 +253,92 @@
                 Point controlCursor = display.PointToClient(Cursor.Position);
                 (float X, float Y) imageCursor;
                 imageCursor = CoordinatesCalculator.GetImageCursorF(controlCursor, display.originZoneShift, display.currentScale);
-                Rectangle rectangle = CalculateRect(initialCursorPosition, imageCursor);
-                rectangles.Add(rectangle);
+                if (currentCondition == Condition.Create)
+                {
+                    Rectangle rectangle = CalculateRect(initialCursorPosition, imageCursor);
+                    rectangles.Add(rectangle);
+                }
                 isLeftButtonHolding = false;
+
             }
             return;
         }
 
+        private Border InvertBorder(Border border, bool isHorisontal)
+        {
+            Border result = Border.No;
+            switch (border)
+            {
+                case Border.Left:
+                    result = Border.Right;
+                    break;
+                case Border.Right:
+                    result = Border.Left;
+                    break;
+                case Border.Top:
+                    result = Border.Bottom;
+                    break;
+                case Border.Bottom:
+                    result = Border.Top;
+                    break;
+                case Border.LeftTop:
+                    result = isHorisontal ? Border.RightTop : Border.LeftBottom;
+                    break;
+                case Border.LeftBottom:
+                    result = isHorisontal ? Border.RightBottom : Border.LeftTop;
+                    break;
+                case Border.RightTop:
+                    result = isHorisontal ? Border.LeftTop : Border.RightBottom;
+                    break;
+                case Border.RightBottom:
+                    result = isHorisontal ? Border.LeftBottom : Border.RightTop;
+                    break;
+            }
+            return result;
+        }
+
+        private Rectangle ValidateRectangle(Rectangle rectangle, ref Border border)
+        {
+            if (rectangle.Width <= 0)
+            {
+                rectangle.X = rectangle.Right;
+                rectangle.Width = Math.Abs(rectangle.Width);
+                border = InvertBorder(border, true);
+            }
+            if (rectangle.Height <= 0)
+            {
+                rectangle.Y = rectangle.Bottom;
+                rectangle.Height = Math.Abs(rectangle.Height);
+                border = InvertBorder(border, false);
+            }
+            return rectangle;
+        }
         private void DisplayMouseMove(object sender, MouseEventArgs e)
         {
             if (isLeftButtonHolding)
             {
-                // Prewiew drawing rect to user
                 Point controlCursor = display.PointToClient(Cursor.Position);
-                (float X, float Y) nowCursor = (controlCursor.X, controlCursor.Y);
-                (float X, float Y) initialControlPos = CoordinatesCalculator.GetControlCursor(initialCursorPosition, display.originZoneShift, display.currentScale);
-                prewiew = CalculateRect(initialControlPos, nowCursor);
-                isTemporaryDraw = true;
-                display.Refresh();
-                isTemporaryDraw = false;
+                Point imageCursor = CoordinatesCalculator.GetImageCursor(controlCursor, display.originZoneShift, display.currentScale);
+                if (currentCondition == Condition.Edit)
+                {
+                    if (currentBorder != Border.No)
+                    {
+                        Rectangle newRect = ResizeRectangle(rectangles[activeRectangleIndex], imageCursor, currentBorder);
+                        rectangles[activeRectangleIndex] = ValidateRectangle(newRect, ref currentBorder);
+                        display.Refresh();
+                    }
+                }
+                if (currentCondition == Condition.Create)
+                {
+                    // Prewiew drawing rect to user
+                    //Point controlCursor = display.PointToClient(Cursor.Position);
+                    (float X, float Y) nowCursor = (controlCursor.X, controlCursor.Y);
+                    (float X, float Y) initialControlPos = CoordinatesCalculator.GetControlCursor(initialCursorPosition, display.originZoneShift, display.currentScale);
+                    prewiew = CalculateRect(initialControlPos, nowCursor);
+                    isTemporaryDraw = true;
+                    display.Refresh();
+                    isTemporaryDraw = false;
+                }
             }
             else
             {
@@ -183,7 +351,16 @@
                 }
                 if (rectangles.Count != 0)
                 {
-                    display.Cursor = GetCursorView(rectangles[activeRectangleIndex], imageCursor);
+                    currentBorder = GetActiveBorder(rectangles[activeRectangleIndex], imageCursor);
+                    display.Cursor = GetCursorView(currentBorder);
+                    if (currentBorder == Border.No)
+                    {
+                        currentCondition = Condition.Create;
+                    }
+                    else
+                    {
+                        currentCondition = Condition.Edit;
+                    }
                 }
                 display.Refresh();
             }

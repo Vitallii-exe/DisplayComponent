@@ -6,8 +6,6 @@
         {
             currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
 
-            draw = new DrawUserRectangles(this);
-
             vScrollBar.Maximum = (int)(origin.Height * currentScale);
             vScrollBar.LargeChange = Size.Height;
             if (vScrollBar.Maximum - vScrollBar.LargeChange < 0)
