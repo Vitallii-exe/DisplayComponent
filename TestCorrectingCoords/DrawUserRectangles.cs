@@ -23,8 +23,10 @@
 
         DisplayUserControl display;
         List<Rectangle> rectangles = new List<Rectangle>();
-        Rectangle prewiew = new Rectangle(0, 0, 0, 0);
+        Rectangle preview = new Rectangle(0, 0, 0, 0);
         int activeRectangleIndex = 0;
+        (Pen active, Pen passive) pens = (new Pen(Color.Lime), new Pen(Color.Black));
+        Pen previewPen = new Pen(Color.Azure);
         (float X, float Y) initialCursorPosition;
         bool isLeftButtonHolding = false;
         bool isTemporaryDraw = false;
@@ -41,20 +43,10 @@
         {
             if (isTemporaryDraw)
             {
-                graphics.DrawRectangle(Pens.Azure, prewiew);
+                Rectangle scaledElement = ResizeRect(preview);
+                graphics.DrawRectangle(previewPen, scaledElement);
             }
-            for (int i = 0; i < rectangles.Count; i++)
-            {
-                Rectangle scaledElement = ResizeRect(rectangles[i]);
-                if (i == activeRectangleIndex)
-                {
-                    graphics.DrawRectangle(Pens.Lime, scaledElement);
-                }
-                else
-                {
-                    graphics.DrawRectangle(Pens.Black, scaledElement);
-                }
-            }
+            DrawRectangleArray(graphics, rectangles, activeRectangleIndex, pens);
             return;
         }
 
@@ -62,25 +54,41 @@
         {
             Size size = new Size((int)Math.Abs(firstPoint.X - secondPoint.X), (int)Math.Abs(firstPoint.Y - secondPoint.Y));
             Point location = new Point(0, 0);
-
-            if (firstPoint.X < secondPoint.X)
-            {
-                location.X = (int)firstPoint.X;
-            }
-            else
-            {
-                location.X = (int)secondPoint.X;
-            }
-
-            if (firstPoint.Y < secondPoint.Y)
-            {
-                location.Y = (int)firstPoint.Y;
-            }
-            else
-            {
-                location.Y = (int)secondPoint.Y;
-            }
+            location.X = (firstPoint.X < secondPoint.X) ? (int)firstPoint.X : (int)secondPoint.X;
+            location.Y = (firstPoint.Y < secondPoint.Y) ? (int)firstPoint.Y : (int)secondPoint.Y;
             return new Rectangle(location, size);
+        }
+
+        private void DrawRectangleArray(Graphics graphics, List<Rectangle> rectangles, int activeIndex, (Pen active, Pen passive) pens)
+        {
+            for (int i = 0; i < rectangles.Count; i++)
+            {
+                Rectangle scaledElement = ResizeRect(rectangles[i]);
+                Pen pen;
+                if (i == activeIndex)
+                {
+                    pen = pens.active;
+                }
+                else
+                {
+                    pen = pens.passive;
+                }
+                pen.DashStyle = System.Drawing.Drawing2D.DashStyle.Dash;
+
+                if (scaledElement.Width == 0)
+                {
+                    graphics.DrawLine(pen, scaledElement.Location, new Point(scaledElement.Left, scaledElement.Bottom));
+                }
+                else if (scaledElement.Height == 0)
+                {
+                    graphics.DrawLine(pen, scaledElement.Location, new Point(scaledElement.Right, scaledElement.Top));
+                }
+                else
+                {
+                    graphics.DrawRectangle(pen, scaledElement);
+                }
+            }
+            return;
         }
 
         private Rectangle ResizeRect(Rectangle rectangle)
@@ -118,11 +126,10 @@
             }
             return nearestRectIndex;
         }
-        private Border GetActiveBorder(Rectangle rectangle, Point cursor)
+        private Border GetActiveBorder(Rectangle rectangle, Point cursor, float range)
         {
             int[] rectCoordinatesX = { rectangle.Left, rectangle.Right };
             int[] rectCoordinatesY = { rectangle.Top, rectangle.Bottom };
-            //int[] allCoordinates = { rectangle.Left, rectangle.Right, rectangle.Top, rectangle.Bottom };
             int variantsCount = 0;
             Border[] diagonalCursors = { Border.LeftTop, Border.LeftBottom, Border.RightTop, Border.RightBottom };
 
@@ -130,7 +137,7 @@
             {
                 foreach (int rectCoordY in rectCoordinatesY)
                 {
-                    if (Math.Abs(cursor.X - rectCoordX) < 5 & Math.Abs(cursor.Y - rectCoordY) < 5)
+                    if (Math.Abs(cursor.X - rectCoordX) < range & Math.Abs(cursor.Y - rectCoordY) < range)
                     {
                         return diagonalCursors[variantsCount];
                     }
@@ -140,19 +147,19 @@
                     }
                 }
             }
-            if (Math.Abs(cursor.X - rectangle.Left) < 5)
+            if (Math.Abs(cursor.X - rectangle.Left) < range)
             {
                 return Border.Left;
             }
-            else if (Math.Abs(cursor.X - rectangle.Right) < 5)
+            else if (Math.Abs(cursor.X - rectangle.Right) < range)
             {
                 return Border.Right;
             }
-            else if (Math.Abs(cursor.Y - rectangle.Top) < 5)
+            else if (Math.Abs(cursor.Y - rectangle.Top) < range)
             {
                 return Border.Top;
             }
-            else if (Math.Abs(cursor.Y - rectangle.Bottom) < 5)
+            else if (Math.Abs(cursor.Y - rectangle.Bottom) < range)
             {
                 return Border.Bottom;
             }
@@ -217,8 +224,8 @@
                     break;
                 case Border.LeftBottom:
                     rectangle.Width = rectangle.Right - cursor.X;
-                    rectangle.X = cursor.X;
                     rectangle.Height = cursor.Y - rectangle.Y;
+                    rectangle.X = cursor.X;
                     break;
                 case Border.RightTop:
                     rectangle.Width = cursor.X - rectangle.X;
@@ -332,9 +339,9 @@
                 {
                     // Prewiew drawing rect to user
                     //Point controlCursor = display.PointToClient(Cursor.Position);
-                    (float X, float Y) nowCursor = (controlCursor.X, controlCursor.Y);
-                    (float X, float Y) initialControlPos = CoordinatesCalculator.GetControlCursor(initialCursorPosition, display.originZoneShift, display.currentScale);
-                    prewiew = CalculateRect(initialControlPos, nowCursor);
+                    //(float X, float Y) nowCursor = (controlCursor.X, controlCursor.Y);
+                    //(float X, float Y) initialControlPos = CoordinatesCalculator.GetControlCursor(initialCursorPosition, display.originZoneShift, display.currentScale);
+                    preview = CalculateRect(initialCursorPosition, (imageCursor.X, imageCursor.Y));
                     isTemporaryDraw = true;
                     display.Refresh();
                     isTemporaryDraw = false;
@@ -351,7 +358,7 @@
                 }
                 if (rectangles.Count != 0)
                 {
-                    currentBorder = GetActiveBorder(rectangles[activeRectangleIndex], imageCursor);
+                    currentBorder = GetActiveBorder(rectangles[activeRectangleIndex], imageCursor, 5 / display.currentScale);
                     display.Cursor = GetCursorView(currentBorder);
                     if (currentBorder == Border.No)
                     {
