@@ -63,6 +63,7 @@
         {
             base.OnPaint(e);
             RedrawImage(e.Graphics);
+            draw.DrawOver(e.Graphics);
             return;
         }
 

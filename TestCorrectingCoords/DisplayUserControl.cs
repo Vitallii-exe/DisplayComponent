@@ -16,7 +16,7 @@
 
         float[] scaleSteps = { 0.25F, 0.5F, 1F, 1.5F, 2F, 3F, 4F, 5F };
         float scaleFixedStep = 0.5F;
-        int scrollCoefficient = 10;
+        int scrollCoefficient = 20;
         int currentScaleStepIndex = 2;
 
         bool isBlockScrollValueChangedEvent = false;
@@ -133,7 +133,6 @@
             userControlGraphics.DrawImage(origin, currentControlRect, originZoneShift.X, originZoneShift.Y,
                                      Size.Width / currentScale, Size.Height / currentScale,
                                      GraphicsUnit.Pixel);
-            draw.DrawOver(userControlGraphics);
             
             return;
         }

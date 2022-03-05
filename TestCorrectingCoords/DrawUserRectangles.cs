@@ -11,12 +11,14 @@
             Right,
             Top,
             Bottom,
-            No
+            No,
+            All
         }
         enum Condition
         {
             Create,
-            Edit
+            Edit,
+            Move
         }
         Condition currentCondition = Condition.Create;
         Border currentBorder = Border.No;
@@ -28,6 +30,7 @@
         (Pen active, Pen passive) pens = (new Pen(Color.Lime), new Pen(Color.Black));
         Pen previewPen = new Pen(Color.Azure);
         (float X, float Y) initialCursorPosition;
+        Point relativeCursor = new Point(0, 0);
         bool isLeftButtonHolding = false;
         bool isTemporaryDraw = false;
 
@@ -139,8 +142,8 @@
         {
             RectangleF rectangleWithRange = new RectangleF(rectangle.X - range / 2,
                                                            rectangle.Y - range / 2,
-                                                           rectangle.Width + range / 2,
-                                                           rectangle.Height + range / 2);
+                                                           rectangle.Width + range,
+                                                           rectangle.Height + range);
             if (!rectangleWithRange.Contains(cursor))
             {
                 return Border.No;
@@ -180,7 +183,7 @@
             {
                 return Border.Bottom;
             }
-            return Border.No;
+            return Border.All;
         }
 
         private Cursor GetCursorView(Border border)
@@ -211,6 +214,9 @@
                     break;
                 case Border.RightBottom:
                     result = Cursors.SizeNWSE;
+                    break;
+                case Border.All:
+                    result = Cursors.SizeAll;
                     break;
             }
             return result;
@@ -265,6 +271,12 @@
                 {
                     initialCursorPosition = CoordinatesCalculator.GetImageCursorF(controlCursor, display.originZoneShift, display.currentScale);
                 }
+                if (currentCondition == Condition.Move)
+                {
+                    Point imageCursor = CoordinatesCalculator.GetImageCursor(controlCursor, display.originZoneShift, display.currentScale);
+                    relativeCursor.X = imageCursor.X - rectangles[activeRectangleIndex].X;
+                    relativeCursor.Y = imageCursor.Y - rectangles[activeRectangleIndex].Y;
+                }
                 isLeftButtonHolding = true;
             }
             return;
@@ -280,9 +292,11 @@
                 if (currentCondition == Condition.Create)
                 {
                     Rectangle rectangle = CalculateRect(initialCursorPosition, imageCursor);
+                    rectangle = CheckImageBoundaries(rectangle, display.origin, true);
                     if (rectangle.Width != 0 & rectangle.Height != 0)
                     {
                         rectangles.Add(rectangle);
+                        display.Refresh();
                     }
                 }
                 isLeftButtonHolding = false;
@@ -340,6 +354,52 @@
             }
             return rectangle;
         }
+
+        private Rectangle CheckImageBoundaries(Rectangle rectangle, Image image, bool cutSize=false)
+        {
+            if (cutSize)
+            {
+                if (rectangle.Left < 0)
+                {
+                    rectangle.Width += rectangle.Left;
+                    rectangle.X = 0;
+                }
+                if (rectangle.Top < 0)
+                {
+                    rectangle.Height += rectangle.Top;
+                    rectangle.Y = 0;
+                }
+
+                if (rectangle.Right > image.Width)
+                {
+                    rectangle.Width = image.Width - rectangle.X;
+                }
+                if (rectangle.Bottom > image.Height)
+                {
+                    rectangle.Height = image.Height - rectangle.Y;
+                }
+            }
+            else
+            {
+                if (rectangle.Left < 0)
+                {
+                    rectangle.X = 0;
+                }
+                if (rectangle.Top < 0)
+                {
+                    rectangle.Y = 0;
+                }
+                if (rectangle.Right > image.Width)
+                {
+                    rectangle.X = image.Width - rectangle.Width;
+                }
+                if (rectangle.Bottom > image.Height)
+                {
+                    rectangle.Y = image.Height - rectangle.Height;
+                }
+            }
+            return rectangle;
+        }
         private void DisplayMouseMove(object sender, MouseEventArgs e)
         {
             if (isLeftButtonHolding)
@@ -358,38 +418,58 @@
                 if (currentCondition == Condition.Create)
                 {
                     // Prewiew drawing rect to user
-                    //Point controlCursor = display.PointToClient(Cursor.Position);
-                    //(float X, float Y) nowCursor = (controlCursor.X, controlCursor.Y);
-                    //(float X, float Y) initialControlPos = CoordinatesCalculator.GetControlCursor(initialCursorPosition, display.originZoneShift, display.currentScale);
                     preview = CalculateRect(initialCursorPosition, (imageCursor.X, imageCursor.Y));
+                    preview = CheckImageBoundaries(preview, display.origin, true);
                     isTemporaryDraw = true;
                     display.Refresh();
                     isTemporaryDraw = false;
                 }
+                if (currentCondition == Condition.Move)
+                {
+                    Rectangle newRect = new Rectangle(imageCursor.X - relativeCursor.X,
+                                                      imageCursor.Y - relativeCursor.Y,
+                                                      rectangles[activeRectangleIndex].Width,
+                                                      rectangles[activeRectangleIndex].Height);
+                    newRect = CheckImageBoundaries(newRect, display.origin);
+                    rectangles[activeRectangleIndex] = newRect;
+                    display.Refresh();
+                }
             }
             else
             {
+                bool isNeedRefresh = false;
                 Point controlCursor = display.PointToClient(Cursor.Position);
                 Point imageCursor = CoordinatesCalculator.GetImageCursor(controlCursor, display.originZoneShift, display.currentScale);
                 int nearestRectIndex = FindNearestRectangle(rectangles, imageCursor);
                 if (nearestRectIndex != -1)
                 {
-                    activeRectangleIndex = nearestRectIndex;
+                    if (activeRectangleIndex != nearestRectIndex)
+                    {
+                        activeRectangleIndex = nearestRectIndex;
+                        isNeedRefresh = true;
+                    }
                 }
                 if (rectangles.Count != 0)
                 {
                     currentBorder = GetActiveBorder(rectangles[activeRectangleIndex], imageCursor, 5 / display.currentScale);
                     display.Cursor = GetCursorView(currentBorder);
-                    if (currentBorder == Border.No)
+                    switch (currentBorder)
                     {
-                        currentCondition = Condition.Create;
-                    }
-                    else
-                    {
-                        currentCondition = Condition.Edit;
+                        case Border.No:
+                            currentCondition = Condition.Create;
+                            break;
+                        case Border.All:
+                            currentCondition = Condition.Move;
+                            break;
+                        default:
+                            currentCondition = Condition.Edit;
+                            break;
                     }
                 }
-                display.Refresh();
+                if (isNeedRefresh)
+                {
+                    display.Refresh();
+                }
             }
             return;
         }
