@@ -103,31 +103,48 @@
 
         private int FindNearestRectangle(List<Rectangle> rectangles, Point cursor)
         {
-            int nearestRectIndex = -1;
-            Point nearestBorder = new Point(100000, 100000);
+            const int bigDistance = 10000;
+            int nearestRectIndex = 0;
+            int nearestDistance = bigDistance;
             for (int i = 0; i < rectangles.Count; i++)
             {
-                if (rectangles[i].Contains(cursor))
-                {
-                    Point firstDistance = new Point(Math.Abs(cursor.X - rectangles[i].Left), Math.Abs(cursor.Y - rectangles[i].Top));
-                    Point secondDistance = new Point(Math.Abs(cursor.X - rectangles[i].Right), Math.Abs(cursor.Y - rectangles[i].Bottom));
+                int[] distances = { bigDistance, bigDistance, bigDistance, bigDistance };
+                int leftDiff = Math.Abs(cursor.X - rectangles[i].Left);
+                int rightDiff = Math.Abs(cursor.X - rectangles[i].Right);
+                int topDiff = Math.Abs(cursor.Y - rectangles[i].Top);
+                int bottomDiff = Math.Abs(cursor.Y - rectangles[i].Bottom);
 
-                    if (firstDistance.X < nearestBorder.X & firstDistance.Y < nearestBorder.Y)
+                distances[0] = (int)Math.Sqrt(Math.Pow(leftDiff, 2) + Math.Pow(topDiff, 2));
+                distances[1] = (int)Math.Sqrt(Math.Pow(rightDiff, 2) + Math.Pow(topDiff, 2));
+                distances[2] = (int)Math.Sqrt(Math.Pow(leftDiff, 2) + Math.Pow(bottomDiff, 2));
+                distances[3] = (int)Math.Sqrt(Math.Pow(rightDiff, 2) + Math.Pow(bottomDiff, 2));
+
+                int minDistance = bigDistance;
+                foreach (int currentDistance in distances)
+                {
+                    if (currentDistance < minDistance)
                     {
-                        nearestBorder = firstDistance;
-                        nearestRectIndex = i;
+                        minDistance = currentDistance;
                     }
-                    if (secondDistance.X < nearestBorder.X & secondDistance.Y < nearestBorder.Y)
-                    {
-                        nearestBorder = secondDistance;
-                        nearestRectIndex = i;
-                    }
+                }
+                if (minDistance < nearestDistance)
+                {
+                    nearestDistance = minDistance;
+                    nearestRectIndex = i;
                 }
             }
             return nearestRectIndex;
         }
         private Border GetActiveBorder(Rectangle rectangle, Point cursor, float range)
         {
+            RectangleF rectangleWithRange = new RectangleF(rectangle.X - range / 2,
+                                                           rectangle.Y - range / 2,
+                                                           rectangle.Width + range / 2,
+                                                           rectangle.Height + range / 2);
+            if (!rectangleWithRange.Contains(cursor))
+            {
+                return Border.No;
+            }
             int[] rectCoordinatesX = { rectangle.Left, rectangle.Right };
             int[] rectCoordinatesY = { rectangle.Top, rectangle.Bottom };
             int variantsCount = 0;
@@ -263,7 +280,10 @@
                 if (currentCondition == Condition.Create)
                 {
                     Rectangle rectangle = CalculateRect(initialCursorPosition, imageCursor);
-                    rectangles.Add(rectangle);
+                    if (rectangle.Width != 0 & rectangle.Height != 0)
+                    {
+                        rectangles.Add(rectangle);
+                    }
                 }
                 isLeftButtonHolding = false;
 
