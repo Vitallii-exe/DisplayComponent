@@ -27,9 +27,9 @@
         List<Rectangle> rectangles = new List<Rectangle>();
         Rectangle preview = new Rectangle(0, 0, 0, 0);
         int activeRectangleIndex = 0;
-        (Pen active, Pen passive) pens = (new Pen(Color.Lime), new Pen(Color.Black));
-        Pen previewPen = new Pen(Color.Azure);
-        (float X, float Y) initialCursorPosition;
+        (Pen active, Pen passive) pens = (new Pen(Color.Lime, 2), new Pen(Color.Black, 2));
+        Pen previewPen = new Pen(Color.Azure, 2);
+        PointF initialCursorPosition;
         Point relativeCursor = new Point(0, 0);
         bool isLeftButtonHolding = false;
         bool isTemporaryDraw = false;
@@ -53,7 +53,7 @@
             return;
         }
 
-        private Rectangle CalculateRect((float X, float Y) firstPoint, (float X, float Y) secondPoint)
+        private Rectangle CalculateRect(PointF firstPoint, PointF secondPoint)
         {
             Size size = new Size((int)Math.Abs(firstPoint.X - secondPoint.X), (int)Math.Abs(firstPoint.Y - secondPoint.Y));
             Point location = new Point(0, 0);
@@ -96,8 +96,8 @@
 
         private Rectangle ResizeRect(Rectangle rectangle)
         {
-            (float, float) location = (rectangle.X, rectangle.Y);
-            (float X, float Y) elementLocation = CoordinatesCalculator.GetControlCursor(location, display.originZoneShift, display.currentScale);
+            PointF location = new PointF(rectangle.X, rectangle.Y);
+            PointF elementLocation = CoordinatesCalculator.GetControlCursor(location, display.originZoneShift, display.currentScale);
             Size scaledSize = new Size();
             scaledSize.Width = (int)(rectangle.Width * display.currentScale);
             scaledSize.Height = (int)(rectangle.Height * display.currentScale);
@@ -287,8 +287,7 @@
             if (e.Button == MouseButtons.Left)
             {
                 Point controlCursor = display.PointToClient(Cursor.Position);
-                (float X, float Y) imageCursor;
-                imageCursor = CoordinatesCalculator.GetImageCursorF(controlCursor, display.originZoneShift, display.currentScale);
+                PointF imageCursor = CoordinatesCalculator.GetImageCursorF(controlCursor, display.originZoneShift, display.currentScale);
                 if (currentCondition == Condition.Create)
                 {
                     Rectangle rectangle = CalculateRect(initialCursorPosition, imageCursor);
@@ -418,7 +417,7 @@
                 if (currentCondition == Condition.Create)
                 {
                     // Prewiew drawing rect to user
-                    preview = CalculateRect(initialCursorPosition, (imageCursor.X, imageCursor.Y));
+                    preview = CalculateRect(initialCursorPosition, imageCursor);
                     preview = CheckImageBoundaries(preview, display.origin, true);
                     isTemporaryDraw = true;
                     display.Refresh();

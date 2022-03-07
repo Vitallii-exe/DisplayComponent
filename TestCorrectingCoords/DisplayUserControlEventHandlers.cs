@@ -26,11 +26,10 @@
         {
             bool isVertical = sender.Equals(vScrollBar);
             ScrollBar scrollBar;
-            ref float currentZoneShift = ref originZoneShift.Y;
+
             if (isVertical)
             {
                 scrollBar = vScrollBar;
-                currentZoneShift = ref originZoneShift.Y;
 
                 if (scrollBar.Maximum > origin.Height * currentScale)
                 {
@@ -58,7 +57,6 @@
             else
             {
                 scrollBar = hScrollBar;
-                currentZoneShift = ref originZoneShift.X;
 
                 if (scrollBar.Maximum > origin.Width * currentScale)
                 {
@@ -85,7 +83,14 @@
             }
             if (!isBlockScrollValueChangedEvent)
             {
-                currentZoneShift = scrollBar.Value / currentScale;
+                if (isVertical)
+                {
+                    originZoneShift.Y = scrollBar.Value / currentScale;
+                }
+                else
+                {
+                    originZoneShift.X = scrollBar.Value / currentScale;
+                }
                 Refresh();
             }
             return;

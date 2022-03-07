@@ -11,7 +11,7 @@
 
         public float currentScale = 1F;
         public Image origin;
-        public (float X, float Y) originZoneShift;
+        public PointF originZoneShift;
         public Rectangle currentControlRect;
 
         float[] scaleSteps = { 0.25F, 0.5F, 1F, 1.5F, 2F, 3F, 4F, 5F };
@@ -21,13 +21,14 @@
 
         bool isBlockScrollValueChangedEvent = false;
         bool isMiddleMouseButtonHolding = false;
-        (float X, float Y) initialCursorPosition;
+        PointF initialCursorPosition;
 
         public DisplayUserControl()
         {
             InitializeComponent();
             origin = Properties.Resources.templateImage;
             draw = new DrawUserRectangles(this);
+            
         }
 
         private void SynchronizeScrollBarWithShift(ScrollBar scrollBar, int imageSize, float shift, float scale)
@@ -38,7 +39,7 @@
 
             if (newScrollValue > scrollBar.Maximum - scrollBar.LargeChange)
             {
-                vScrollBar.Maximum = newScrollValue + vScrollBar.LargeChange;
+                scrollBar.Maximum = newScrollValue + scrollBar.LargeChange;
             }
 
             if (newScrollValue < scrollBar.Minimum)
@@ -52,7 +53,7 @@
         private void ScaleChangedByWheel(bool isScaleUp)
         {
             Point controlCursor = PointToClient(Cursor.Position);
-            (float X, float Y) imageCursor = CoordinatesCalculator.GetImageCursorF(controlCursor, originZoneShift, currentScale);
+            PointF imageCursor = CoordinatesCalculator.GetImageCursorF(controlCursor, originZoneShift, currentScale);
 
             bool isOutOfRange = false;
             if (isScaleUp)
@@ -162,16 +163,6 @@
             }
             Refresh();
             return;
-        }
-
-        private void DisplayUserControl_MouseClick(object sender, MouseEventArgs e)
-        {
-            //IControlDrawable draw = new DrawUserRectangles(this);
-
-            //Point controlCursor = PointToClient(Cursor.Position);
-            //(float X, float Y) imageCursor = CoordinatesCalculator.GetImageCursor(controlCursor, originZoneShift, currentScale);
-
-            //draw.DrawOver(CreateGraphics(), imageCursor);
         }
     }
 }
