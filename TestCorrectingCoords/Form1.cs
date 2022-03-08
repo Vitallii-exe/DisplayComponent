@@ -6,10 +6,5 @@ namespace ImageDisplayComponent
         {
             InitializeComponent();
         }
-
-        private void displayUserControl_MouseMove(object sender, MouseEventArgs e)
-        {
-
-        }
     }
 }

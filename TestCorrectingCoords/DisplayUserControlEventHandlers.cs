@@ -4,7 +4,7 @@
     {
         private void DisplayUserControlLoad(object sender, EventArgs e)
         {
-            currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
+            currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height - bottomPanel.Height);
 
             vScrollBar.Maximum = (int)(origin.Height * currentScale);
             vScrollBar.LargeChange = Size.Height;
@@ -19,7 +19,7 @@
             {
                 hScrollBar.Visible = false;
             }
-
+            Refresh();
             return;
         }
         private void ScrollBarsValueChanged(object sender, EventArgs e)
@@ -128,6 +128,21 @@
                 isMiddleMouseButtonHolding = false;
             }
             return;
+        }
+
+        private void defaultLocationButtonClick(object sender, EventArgs e)
+        {
+            currentScaleStepIndex = 0;
+            currentScale = scaleSteps[currentScaleStepIndex];
+            isBlockScrollValueChangedEvent = true;
+            originZoneShift = new PointF(0, 0);
+            originZoneShift.X = -Width / currentScale / 2 + (origin.Width) / 2;
+            originZoneShift.Y = -Height / currentScale / 2 + (origin.Height) / 2;
+            SynchronizeScrollBarWithShift(vScrollBar, origin.Height, originZoneShift.Y, currentScale);
+            SynchronizeScrollBarWithShift(hScrollBar, origin.Width, originZoneShift.X, currentScale);
+            scaleLabel.Text = ((int)(currentScale * 100)).ToString() + "%";
+            isBlockScrollValueChangedEvent = false;
+            Refresh();
         }
     }
 }

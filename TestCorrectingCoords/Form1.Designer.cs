@@ -34,9 +34,10 @@
             // displayUserControl
             // 
             this.displayUserControl.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
-            this.displayUserControl.Location = new System.Drawing.Point(12, 12);
+            this.displayUserControl.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.displayUserControl.Location = new System.Drawing.Point(0, 0);
             this.displayUserControl.Name = "displayUserControl";
-            this.displayUserControl.Size = new System.Drawing.Size(909, 490);
+            this.displayUserControl.Size = new System.Drawing.Size(933, 514);
             this.displayUserControl.TabIndex = 8;
             // 
             // Form1

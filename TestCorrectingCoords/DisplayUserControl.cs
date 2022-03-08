@@ -17,6 +17,7 @@
         float[] scaleSteps = { 0.25F, 0.5F, 1F, 1.5F, 2F, 3F, 4F, 5F };
         float scaleFixedStep = 0.5F;
         int scrollCoefficient = 20;
+        const float maxScaleValue = 50F;
         int currentScaleStepIndex = 2;
 
         bool isBlockScrollValueChangedEvent = false;
@@ -84,7 +85,7 @@
             }
             else
             {
-                if (isScaleUp)
+                if (isScaleUp & currentScale < maxScaleValue)
                 {
                     currentScale += scaleFixedStep;
                 }
@@ -94,6 +95,7 @@
             SynchronizeScrollBarWithShift(vScrollBar, origin.Height, originZoneShift.Y, currentScale);
             SynchronizeScrollBarWithShift(hScrollBar, origin.Width, originZoneShift.X, currentScale);
             isBlockScrollValueChangedEvent = false;
+            scaleLabel.Text = ((int)(currentScale * 100)).ToString() + "%";
             Refresh();
 
             return;
