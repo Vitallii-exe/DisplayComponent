@@ -4,7 +4,7 @@
     {
         private void DisplayUserControlLoad(object sender, EventArgs e)
         {
-            currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height - bottomPanel.Height);
+            currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
 
             vScrollBar.Maximum = (int)(origin.Height * currentScale);
             vScrollBar.LargeChange = Size.Height;

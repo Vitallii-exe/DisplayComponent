@@ -27,8 +27,8 @@
         List<Rectangle> rectangles = new List<Rectangle>();
         Rectangle preview = new Rectangle(0, 0, 0, 0);
         int activeRectangleIndex = 0;
-        (Pen active, Pen passive) pens = (new Pen(Color.Lime, 2), new Pen(Color.Black, 2));
-        Pen previewPen = new Pen(Color.Azure, 2);
+        (Pen active, Pen passive) pens = (new Pen(Color.Red, 2), new Pen(Color.DarkRed, 2));
+        Pen previewPen = new Pen(Color.LawnGreen, 2);
         PointF initialCursorPosition;
         Point relativeCursor = new Point(0, 0);
         bool isLeftButtonHolding = false;
@@ -411,6 +411,7 @@
                     {
                         Rectangle newRect = ResizeRectangle(rectangles[activeRectangleIndex], imageCursor, currentBorder);
                         rectangles[activeRectangleIndex] = ValidateRectangle(newRect, ref currentBorder);
+                        rectangles[activeRectangleIndex] = CheckImageBoundaries(rectangles[activeRectangleIndex], display.origin, true);
                         display.Refresh();
                     }
                 }
