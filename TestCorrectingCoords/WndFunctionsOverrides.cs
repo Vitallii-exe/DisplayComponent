@@ -61,8 +61,13 @@
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            base.OnPaint(e);
-            RedrawImage(e.Graphics);
+            //base.OnPaint(e);
+            if (!isOverlayRedraw)
+            {
+                Graphics graphics = Graphics.FromImage(buffer);
+                RedrawImage(graphics);
+            }
+            e.Graphics.DrawImageUnscaled(buffer, 0, 0);
             draw.DrawOver(e.Graphics);
             return;
         }

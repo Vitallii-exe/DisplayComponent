@@ -295,7 +295,7 @@
                     if (rectangle.Width != 0 & rectangle.Height != 0)
                     {
                         rectangles.Add(rectangle);
-                        display.Refresh();
+                        OverlayRefresh();
                     }
                 }
                 isLeftButtonHolding = false;
@@ -304,6 +304,13 @@
             return;
         }
 
+        private void OverlayRefresh()
+        {
+            display.isOverlayRedraw = true;
+            display.Refresh();
+            display.isOverlayRedraw = false;
+            return;
+        }
         private Border InvertBorder(Border border, bool isHorisontal)
         {
             Border result = Border.No;
@@ -412,7 +419,7 @@
                         Rectangle newRect = ResizeRectangle(rectangles[activeRectangleIndex], imageCursor, currentBorder);
                         rectangles[activeRectangleIndex] = ValidateRectangle(newRect, ref currentBorder);
                         rectangles[activeRectangleIndex] = CheckImageBoundaries(rectangles[activeRectangleIndex], display.origin, true);
-                        display.Refresh();
+                        OverlayRefresh();
                     }
                 }
                 if (currentCondition == Condition.Create)
@@ -421,7 +428,7 @@
                     preview = CalculateRect(initialCursorPosition, imageCursor);
                     preview = CheckImageBoundaries(preview, display.origin, true);
                     isTemporaryDraw = true;
-                    display.Refresh();
+                    OverlayRefresh();
                     isTemporaryDraw = false;
                 }
                 if (currentCondition == Condition.Move)
@@ -432,7 +439,7 @@
                                                       rectangles[activeRectangleIndex].Height);
                     newRect = CheckImageBoundaries(newRect, display.origin);
                     rectangles[activeRectangleIndex] = newRect;
-                    display.Refresh();
+                    OverlayRefresh();
                 }
             }
             else
@@ -468,7 +475,7 @@
                 }
                 if (isNeedRefresh)
                 {
-                    display.Refresh();
+                    OverlayRefresh();
                 }
             }
             return;

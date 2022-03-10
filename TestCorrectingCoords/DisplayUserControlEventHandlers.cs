@@ -5,7 +5,7 @@
         private void DisplayUserControlLoad(object sender, EventArgs e)
         {
             currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
-
+            buffer = new Bitmap(Size.Width, Size.Height);
             vScrollBar.Maximum = (int)(origin.Height * currentScale);
             vScrollBar.LargeChange = Size.Height;
             if (vScrollBar.Maximum - vScrollBar.LargeChange < 0)
@@ -19,6 +19,7 @@
             {
                 hScrollBar.Visible = false;
             }
+            GC.Collect();
             Refresh();
             return;
         }

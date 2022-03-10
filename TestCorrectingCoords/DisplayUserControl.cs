@@ -11,6 +11,7 @@
 
         public float currentScale = 1F;
         public Image origin;
+        private Image buffer;
         public PointF originZoneShift;
         public Rectangle currentControlRect;
 
@@ -22,6 +23,7 @@
 
         bool isBlockScrollValueChangedEvent = false;
         bool isMiddleMouseButtonHolding = false;
+        public bool isOverlayRedraw = false;
         PointF initialCursorPosition;
 
         public DisplayUserControl()
