@@ -2,23 +2,19 @@
 {
     public partial class DisplayUserControl : UserControl
     {
-        private void DisplayUserControlLoad(object sender, EventArgs e)
+        private void DisplayUserControlSizeChanged(object sender, EventArgs e)
         {
             currentControlRect = new Rectangle(0, 0, Size.Width, Size.Height);
-            buffer = new Bitmap(Size.Width, Size.Height);
+            if (Size.Width > 0 & Size.Height > 0)
+            {
+                buffer = new Bitmap(Size.Width, Size.Height);
+            }
             vScrollBar.Maximum = (int)(origin.Height * currentScale);
             vScrollBar.LargeChange = Size.Height;
-            if (vScrollBar.Maximum - vScrollBar.LargeChange < 0)
-            {
-                vScrollBar.Visible = false;
-            }
-
             hScrollBar.Maximum = (int)(origin.Width * currentScale);
             hScrollBar.LargeChange = Size.Width;
-            if (hScrollBar.Maximum - hScrollBar.LargeChange < 0)
-            {
-                hScrollBar.Visible = false;
-            }
+            UpdateScrollVisible(vScrollBar);
+            UpdateScrollVisible(hScrollBar);
             GC.Collect();
             Refresh();
             return;
@@ -102,7 +98,9 @@
             {
                 Point controlCursor = PointToClient(Cursor.Position);
                 isBlockScrollValueChangedEvent = true;
-                originZoneShift = CoordinatesCalculator.GetScroll(controlCursor, initialCursorPosition, currentScale);
+                originZoneShift = CoordinatesCalculator.GetShift(controlCursor, 
+                                                                 initialCursorPosition,
+                                                                 currentScale);
 
                 SynchronizeScrollBarWithShift(vScrollBar, origin.Height, originZoneShift.Y, currentScale);
                 SynchronizeScrollBarWithShift(hScrollBar, origin.Width, originZoneShift.X, currentScale);
@@ -116,7 +114,9 @@
             if (e.Button == MouseButtons.Middle)
             {
                 Point controlCursor = PointToClient(Cursor.Position);
-                initialCursorPosition = CoordinatesCalculator.GetImageCursorF(controlCursor, originZoneShift, currentScale);
+                initialCursorPosition = CoordinatesCalculator.GetImageCursorF(controlCursor,
+                                                                              originZoneShift,
+                                                                              currentScale);
                 isMiddleMouseButtonHolding = true;
             }
             return;

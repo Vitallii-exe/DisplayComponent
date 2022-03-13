@@ -1,4 +1,6 @@
-﻿namespace ImageDisplayComponent
+﻿using System.Drawing.Drawing2D;
+
+namespace ImageDisplayComponent
 {
     public interface IControlDrawable
     {
@@ -7,6 +9,16 @@
     }
     public partial class DisplayUserControl : UserControl
     {
+        enum Axis
+        {
+            Horisontal,
+            Vertical
+        }
+        enum MoveDirection
+        {
+            Up,
+            Down
+        }
         IControlDrawable draw;
 
         public float currentScale = 1F;
@@ -31,7 +43,7 @@
             InitializeComponent();
             origin = Properties.Resources.templateImage;
             draw = new DrawUserRectangles(this);
-            
+            buffer = new Bitmap(origin);
         }
 
         private void SynchronizeScrollBarWithShift(ScrollBar scrollBar, int imageSize, float shift, float scale)
@@ -56,7 +68,9 @@
         private void ScaleChangedByWheel(bool isScaleUp)
         {
             Point controlCursor = PointToClient(Cursor.Position);
-            PointF imageCursor = CoordinatesCalculator.GetImageCursorF(controlCursor, originZoneShift, currentScale);
+            PointF imageCursor = CoordinatesCalculator.GetImageCursorF(controlCursor,
+                                                                       originZoneShift,
+                                                                       currentScale);
 
             bool isOutOfRange = false;
             if (isScaleUp)
@@ -93,7 +107,7 @@
                 }
             }
             isBlockScrollValueChangedEvent = true;
-            originZoneShift = CoordinatesCalculator.GetScroll(controlCursor, imageCursor, currentScale);
+            originZoneShift = CoordinatesCalculator.GetShift(controlCursor, imageCursor, currentScale);
             SynchronizeScrollBarWithShift(vScrollBar, origin.Height, originZoneShift.Y, currentScale);
             SynchronizeScrollBarWithShift(hScrollBar, origin.Width, originZoneShift.X, currentScale);
             isBlockScrollValueChangedEvent = false;
@@ -129,24 +143,24 @@
             userControlGraphics.Clear(BackColor);
             if (currentScale < 1)
             {
-                userControlGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.High;
+                userControlGraphics.InterpolationMode = InterpolationMode.High;
             }
             else
             {
-                userControlGraphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+                userControlGraphics.InterpolationMode = InterpolationMode.NearestNeighbor;
             }
             userControlGraphics.DrawImage(origin, currentControlRect, originZoneShift.X, originZoneShift.Y,
-                                     Size.Width / currentScale, Size.Height / currentScale,
-                                     GraphicsUnit.Pixel);
+                                          Size.Width / currentScale, Size.Height / currentScale,
+                                          GraphicsUnit.Pixel);
             
             return;
         }
         
 
-        private void ScrollWheelMove(bool isMoveUp, ScrollBar scrollBar, bool isVertical = true)
+        private void ScrollWheelMove(MoveDirection moveDirection, ScrollBar scrollBar, Axis axis)
         {
             int newValue;
-            if (isMoveUp)
+            if (moveDirection == MoveDirection.Up)
             {
                 newValue = scrollBar.Value + (int)(scrollCoefficient * currentScale);
             }
@@ -155,9 +169,11 @@
                 newValue = scrollBar.Value - (int)(scrollCoefficient * currentScale);
             }
 
-            scrollBar.Value = ConfirmScrollBarValue(newValue, scrollBar.Maximum - scrollBar.LargeChange, scrollBar.Minimum);
+            scrollBar.Value = ConfirmScrollBarValue(newValue, 
+                                                    scrollBar.Maximum - scrollBar.LargeChange, 
+                                                    scrollBar.Minimum);
 
-            if (isVertical)
+            if (axis == Axis.Vertical)
             {
                 originZoneShift.Y = scrollBar.Value / currentScale;
             }

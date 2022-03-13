@@ -102,8 +102,7 @@
             this.DoubleBuffered = true;
             this.Name = "DisplayUserControl";
             this.Size = new System.Drawing.Size(587, 399);
-            this.Load += new System.EventHandler(this.DisplayUserControlLoad);
-            this.SizeChanged += new System.EventHandler(this.DisplayUserControlLoad);
+            this.SizeChanged += new System.EventHandler(this.DisplayUserControlSizeChanged);
             this.MouseDown += new System.Windows.Forms.MouseEventHandler(this.DisplayUserControlMouseDown);
             this.MouseMove += new System.Windows.Forms.MouseEventHandler(this.DisplayUserControlMouseMove);
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.DisplayUserControlMouseUp);

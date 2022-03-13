@@ -36,11 +36,11 @@
                 {
                     if (wParam.delta == wheelForward)
                     {
-                        ScrollWheelMove(true, hScrollBar, false);
+                        ScrollWheelMove(MoveDirection.Up, hScrollBar, Axis.Horisontal);
                     }
                     else if (wParam.delta == wheelBackward)
                     {
-                        ScrollWheelMove(false, hScrollBar, false);
+                        ScrollWheelMove(MoveDirection.Down, hScrollBar, Axis.Horisontal);
                     }
                     return;
                 }
@@ -48,11 +48,11 @@
                 {
                     if (wParam.delta == wheelForward)
                     {
-                        ScrollWheelMove(false, vScrollBar);
+                        ScrollWheelMove(MoveDirection.Down, vScrollBar, Axis.Vertical);
                     }
                     else if (wParam.delta == wheelBackward)
                     {
-                        ScrollWheelMove(true, vScrollBar);
+                        ScrollWheelMove(MoveDirection.Up, vScrollBar, Axis.Vertical);
                     }
                 }
             }
@@ -61,7 +61,6 @@
 
         protected override void OnPaint(PaintEventArgs e)
         {
-            //base.OnPaint(e);
             if (!isOverlayRedraw)
             {
                 Graphics graphics = Graphics.FromImage(buffer);

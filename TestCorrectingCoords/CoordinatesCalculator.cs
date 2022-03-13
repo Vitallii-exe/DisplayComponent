@@ -16,18 +16,18 @@
             return new Point((int)resultCursorX, (int)resultCursorY);
         }
 
-        public static PointF GetControlCursor(PointF imageCursor, PointF scroll, float scale)
+        public static Point GetControlCursor(PointF imageCursor, PointF scroll, float scale)
         {
             float resultCursorX = (imageCursor.X - scroll.X) * scale;
             float resultCursorY = (imageCursor.Y - scroll.Y) * scale;
-            return new PointF(resultCursorX, resultCursorY);
+            return new Point((int)resultCursorX, (int)resultCursorY);
         }
 
-        public static PointF GetScroll(Point controlCursor, PointF imageCursor, float scale)
+        public static PointF GetShift(Point controlCursor, PointF imageCursor, float scale)
         {
-            float resultScrollX = imageCursor.X - controlCursor.X / scale;
-            float resultScrollY = imageCursor.Y - controlCursor.Y / scale;
-            return new PointF(resultScrollX, resultScrollY);
+            float resultShiftX = imageCursor.X - controlCursor.X / scale;
+            float resultShiftY = imageCursor.Y - controlCursor.Y / scale;
+            return new PointF(resultShiftX, resultShiftY);
         }
     }
 }
